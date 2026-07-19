@@ -34,8 +34,8 @@ MAX_RETRIES = 4
 INITIAL_RETRY_DELAY = 1.5
 
 # Telegram env variables
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "6101964896:AAH8IYil0VDYS3mu-XX4xpbfGPAlni3OGCk")
-TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "1522064262")
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 
 # State files
 LAST_ALERTS_PATH = "last_alerts.json"
