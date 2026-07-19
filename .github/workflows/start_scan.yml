@@ -37,3 +37,14 @@ jobs:
           git add config_state.json
           git diff --cached --quiet || git commit -m "chore: start auto scan"
           git push
+
+      - name: Send Telegram notification (start)
+        if: ${{ secrets.TELEGRAM_TOKEN != '' && secrets.TELEGRAM_CHAT_ID != '' }}
+        continue-on-error: true
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          curl -sS --max-time 20 --request POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=Binance scanner started. Auto scan is enabled. Triggered by: ${{ github.actor }}"
