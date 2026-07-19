@@ -1,0 +1,39 @@
+name: Stop Auto Scan
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  stop-auto-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Disable auto scan
+        run: |
+          python - << 'PY'
+          import json
+          from datetime import datetime, timezone
+
+          path = "config_state.json"
+          with open(path, "r", encoding="utf-8") as f:
+              data = json.load(f)
+
+          data["auto_scan_enabled"] = False
+          data["updated_at"] = datetime.now(timezone.utc).isoformat()
+
+          with open(path, "w", encoding="utf-8") as f:
+              json.dump(data, f, indent=2)
+          PY
+
+      - name: Commit state change
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add config_state.json
+          git diff --cached --quiet || git commit -m "chore: stop auto scan"
+          git push
