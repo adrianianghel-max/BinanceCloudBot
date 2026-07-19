@@ -7,6 +7,8 @@ ALERT_ONLY_NEW = True
 
 # Exchange settings
 EXCHANGE_ID = "binance"
+PRIMARY_EXCHANGE_ID = "binance"
+FALLBACK_EXCHANGE_IDS = ("binanceus",)
 QUOTE_ASSET = "USDC"
 LEVERAGED_TOKENS = ("UP", "DOWN", "BULL", "BEAR")
 
