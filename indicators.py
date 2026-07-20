@@ -49,6 +49,38 @@ def is_daily_bullish(df: pd.DataFrame) -> bool:
     return all(bool(c) for c in conditions)
 
 
+def is_daily_early_trend(df: pd.DataFrame, ema50_lookback: int = 5) -> bool:
+    if len(df) < max(ema50_lookback + 2, 60):
+        return False
+
+    last = df.iloc[-1]
+    ema50_now = df["ema50"].iloc[-1]
+    ema50_prev = df["ema50"].iloc[-(ema50_lookback + 1)]
+
+    if pd.isna(ema50_now) or pd.isna(ema50_prev):
+        return False
+
+    conditions = [
+        last["ema10"] > last["ema50"],
+        last["close"] > last["ema50"],
+        ema50_now > ema50_prev,
+    ]
+    return all(bool(c) for c in conditions)
+
+
+def is_4h_breakout(df: pd.DataFrame, lookback: int = 20) -> bool:
+    if len(df) < lookback + 2:
+        return False
+
+    previous_high = df["high"].rolling(window=lookback).max().shift(1).iloc[-1]
+    close_now = df["close"].iloc[-1]
+
+    if pd.isna(previous_high):
+        return False
+
+    return bool(close_now > previous_high)
+
+
 def calculate_macd_values(df: pd.DataFrame) -> tuple[Optional[float], Optional[float]]:
     macd_df = ta.macd(df["close"], fast=12, slow=26, signal=9)
     if macd_df is None or macd_df.empty:
