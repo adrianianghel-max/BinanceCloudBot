@@ -9,14 +9,14 @@ import ccxt
 import config
 from indicators import (
     add_ema_columns,
+    calculate_adx_value,
+    calculate_distance_to_breakout_pct,
     calculate_ema10_slope_pct,
     calculate_growth_score,
     calculate_macd_values,
     calculate_rsi_pair,
     calculate_volume_ratio,
-    is_4h_breakout,
     is_daily_bullish,
-    is_daily_early_trend,
     prepare_ohlcv_df,
 )
 from state_manager import (
@@ -138,8 +138,7 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
     h1_df = prepare_ohlcv_df(h1_raw) if h1_raw else None
 
     daily_strict_ok = is_daily_bullish(daily_df)
-    daily_early_ok = is_daily_early_trend(daily_df, ema50_lookback=config.EMA_MID_SLOPE_LOOKBACK)
-    daily_ok = daily_strict_ok or (config.ALLOW_EARLY_TREND and daily_early_ok)
+    daily_ok = daily_strict_ok
 
     ema10_slope = calculate_ema10_slope_pct(daily_df, lookback=config.EMA_SLOPE_LOOKBACK)
     if ema10_slope is None:
@@ -149,15 +148,22 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
 
     macd_line, signal_line = calculate_macd_values(h4_df)
     volume_ratio = calculate_volume_ratio(h4_df, period=config.VOLUME_SMA_PERIOD)
-    if macd_line is None or signal_line is None or volume_ratio is None:
+    distance_to_breakout = calculate_distance_to_breakout_pct(h4_df, lookback=config.BREAKOUT_LOOKBACK_4H)
+    adx_4h = calculate_adx_value(h4_df, period=config.ADX_PERIOD)
+    if (
+        macd_line is None
+        or signal_line is None
+        or volume_ratio is None
+        or distance_to_breakout is None
+        or adx_4h is None
+    ):
         return None
 
     macd_spread_ratio = (macd_line - signal_line) / max(abs(signal_line), abs(macd_line), 1e-8)
     macd_ok = macd_line > signal_line and macd_spread_ratio >= config.MIN_MACD_SPREAD_RATIO
-    volume_ok = volume_ratio > config.VOLUME_RATIO_THRESHOLD
-    breakout_ok = True
-    if config.USE_4H_BREAKOUT_FILTER:
-        breakout_ok = is_4h_breakout(h4_df, lookback=config.BREAKOUT_LOOKBACK_4H)
+    volume_ok = volume_ratio >= config.VOLUME_RATIO_THRESHOLD
+    near_breakout_ok = 0 <= distance_to_breakout <= config.NEAR_BREAKOUT_MAX_DISTANCE_PCT
+    adx_ok = adx_4h >= config.ADX_MIN
 
     rsi_current = None
     rsi_ok = True
@@ -173,7 +179,7 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
         )
         vol_up_ok = h1_df["volume"].iloc[-1] > h1_df["volume"].iloc[-2]
 
-    qualified = daily_ok and macd_ok and volume_ok and breakout_ok and rsi_ok and vol_up_ok
+    qualified = daily_ok and macd_ok and volume_ok and near_breakout_ok and adx_ok and rsi_ok and vol_up_ok
     if not qualified:
         return None
 
@@ -182,9 +188,9 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
 
     growth_score = calculate_growth_score(
         ema10_slope_pct=ema10_slope,
-        macd_line=macd_line,
-        signal_line=signal_line,
+        macd_spread_ratio=macd_spread_ratio,
         volume_ratio=volume_ratio,
+        distance_to_breakout_pct=distance_to_breakout,
         rsi_value=rsi_current,
         use_1h_filter=config.USE_1H_FILTER,
     )
@@ -197,6 +203,7 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
         "vol4h": volume_ratio,
         "macd": f"{macd_line:.5f}/{signal_line:.5f}",
         "rsi_1h": f"{rsi_current:.2f}" if rsi_current is not None else "N/A",
+        "dist_breakout_pct": distance_to_breakout,
         "growth_score": growth_score,
     }
 
@@ -207,8 +214,8 @@ def print_console_table(rows: list[dict[str, Any]]) -> None:
         return
 
     header = (
-        "| Symbol | Price | Daily | EMA10 Slope | Vol 4H | MACD | "
-        "RSI 1H | Growth Score |"
+        "| Symbol | Price | RSI | MACD | EMA10 Slope | Vol Ratio | "
+        "Dist Breakout % | Growth Score |"
     )
     separator = "|---|---:|---|---:|---:|---|---:|---:|"
 
@@ -218,11 +225,12 @@ def print_console_table(rows: list[dict[str, Any]]) -> None:
         price = _format_float(row.get("price"), 6)
         ema10_slope = _format_float(row.get("ema10_slope"), 3, "%")
         vol4h = _format_float(row.get("vol4h"), 2, "x")
+        dist_breakout = _format_float(row.get("dist_breakout_pct"), 2, "%")
         growth_score = _format_float(row.get("growth_score"), 2, "%")
         print(
-            f"| {row.get('symbol', 'N/A')} | {price} | {row.get('daily', 'N/A')} | "
-            f"{ema10_slope} | {vol4h} | {row.get('macd', 'N/A')} | "
-            f"{row.get('rsi_1h', 'N/A')} | {growth_score} |"
+            f"| {row.get('symbol', 'N/A')} | {price} | {row.get('rsi_1h', 'N/A')} | "
+            f"{row.get('macd', 'N/A')} | {ema10_slope} | {vol4h} | "
+            f"{dist_breakout} | {growth_score} |"
         )
 
 
@@ -247,7 +255,7 @@ def main() -> int:
         time.sleep(0.2)
 
     results.sort(key=lambda x: x["growth_score"], reverse=True)
-    print_console_table(results)
+    print_console_table(results[: config.CONSOLE_TOP_N])
 
     top_for_telegram = sorted(
         results,

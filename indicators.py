@@ -81,6 +81,36 @@ def is_4h_breakout(df: pd.DataFrame, lookback: int = 20) -> bool:
     return bool(close_now > previous_high)
 
 
+def calculate_distance_to_breakout_pct(df: pd.DataFrame, lookback: int = 20) -> Optional[float]:
+    if len(df) < lookback:
+        return None
+
+    highest_high = df["high"].rolling(window=lookback).max().iloc[-1]
+    current_price = df["close"].iloc[-1]
+
+    if pd.isna(highest_high) or pd.isna(current_price) or current_price <= 0:
+        return None
+
+    distance = ((highest_high - current_price) / current_price) * 100.0
+    return float(distance)
+
+
+def calculate_adx_value(df: pd.DataFrame, period: int = 14) -> Optional[float]:
+    adx_df = ta.adx(df["high"], df["low"], df["close"], length=period)
+    if adx_df is None or adx_df.empty:
+        return None
+
+    adx_col = [c for c in adx_df.columns if c.startswith("ADX_")]
+    if not adx_col:
+        return None
+
+    adx_value = adx_df[adx_col[0]].iloc[-1]
+    if pd.isna(adx_value):
+        return None
+
+    return float(adx_value)
+
+
 def calculate_macd_values(df: pd.DataFrame) -> tuple[Optional[float], Optional[float]]:
     macd_df = ta.macd(df["close"], fast=12, slow=26, signal=9)
     if macd_df is None or macd_df.empty:
@@ -130,30 +160,31 @@ def calculate_rsi_pair(df: pd.DataFrame, period: int = 14) -> tuple[Optional[flo
 
 def calculate_growth_score(
     ema10_slope_pct: float,
-    macd_line: float,
-    signal_line: float,
+    macd_spread_ratio: float,
     volume_ratio: float,
+    distance_to_breakout_pct: float,
     rsi_value: Optional[float],
     use_1h_filter: bool,
 ) -> float:
-    # Transparent weighted scoring without AI/ML.
-    slope_norm = min(max((ema10_slope_pct + 0.4) / 1.8, 0.0), 1.0)
-    slope_score = slope_norm * 35.0
+    # Pre-breakout scoring with explicit weights totaling 100 points.
+    slope_norm = min(max(ema10_slope_pct / 0.5, 0.0), 1.0)
+    slope_score = slope_norm * 30.0
 
-    denominator = max(abs(signal_line), abs(macd_line), 1e-8)
-    macd_strength = (macd_line - signal_line) / denominator
-    macd_norm = min(max(macd_strength * 4.0, 0.0), 1.0)
-    macd_score = macd_norm * 30.0
+    vol_norm = min(max((volume_ratio - 1.0) / 1.0, 0.0), 1.0)
+    volume_score = vol_norm * 25.0
 
-    vol_norm = min(max((volume_ratio - 1.0) / 2.0, 0.0), 1.0)
-    volume_score = vol_norm * 20.0
+    macd_norm = min(max(macd_spread_ratio / 0.03, 0.0), 1.0)
+    macd_score = macd_norm * 20.0
+
+    near_breakout_norm = min(max((3.0 - max(distance_to_breakout_pct, 0.0)) / 3.0, 0.0), 1.0)
+    near_breakout_score = near_breakout_norm * 15.0
 
     if use_1h_filter:
         rsi_base = rsi_value if rsi_value is not None else 50.0
-        rsi_norm = min(max((rsi_base - 50.0) / 20.0, 0.0), 1.0)
-        rsi_score = rsi_norm * 15.0
+        rsi_norm = min(max((rsi_base - 55.0) / 17.0, 0.0), 1.0)
+        rsi_score = rsi_norm * 10.0
     else:
-        rsi_score = 15.0
+        rsi_score = 10.0
 
-    total = slope_score + macd_score + volume_score + rsi_score
+    total = slope_score + volume_score + macd_score + near_breakout_score + rsi_score
     return round(min(total, 100.0), 2)
