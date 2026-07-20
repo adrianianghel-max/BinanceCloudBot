@@ -38,7 +38,7 @@ jobs:
           git diff --cached --quiet || git commit -m "chore: start auto scan"
           git push
 
-      - name: Send Telegram notification (start)
+            - name: Send Telegram notification (start)
         continue-on-error: true
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}

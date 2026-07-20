@@ -4,7 +4,7 @@ import os
 # Core behavior
 USE_1H_FILTER = True
 ALERT_ONLY_NEW = True
-ALLOW_EARLY_TREND = True
+ALLOW_EARLY_TREND = False
 USE_4H_BREAKOUT_FILTER = True
 
 # Exchange settings
