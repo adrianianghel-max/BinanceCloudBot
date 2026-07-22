@@ -1159,6 +1159,8 @@ async function mainLoop() {
 // --- MOD GITHUB ACTIONS: run single scan, fără loop infinit ---
 async function runSingleScan() {
     console.log(`\n🤖 GitHub Actions scan la ${new Date().toISOString()}`);
+    ensureDir(DATA_DIR);
+    ensureDir(WATCH_DIR);
     watchlist = loadWatchlist();
     const btcPerf = await fetchBTCPerformance();
     const historyWinners = [];
