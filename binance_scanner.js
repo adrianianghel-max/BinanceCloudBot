@@ -1196,9 +1196,24 @@ if (typeof module !== 'undefined' && module.exports) {
     module.exports = { runSingleScan, runScanOnce, mainLoop };
 }
 
-// Pornește loop dacă e rulat direct (nu din GitHub Actions)
-if (require.main === module || process.env.GITHUB_ACTIONS !== 'true') {
+// Detecție mod execuție
+const isGitHubActions = process.env.GITHUB_ACTIONS === 'true';
+const isDirectRun = typeof require !== 'undefined' && require.main === module;
+
+if (isGitHubActions) {
+    // GitHub Actions: run single scan + exit
+    runSingleScan()
+        .then(() => {
+            console.log('✅ Scan complet. GitHub Actions se va opri.');
+            process.exit(0);
+        })
+        .catch(err => {
+            console.error('❌ Eroare fatală:', err.message);
+            process.exit(1);
+        });
+} else if (isDirectRun) {
+    // Local: loop infinit cu watchlist check la 5 min
     mainLoop().catch(err => console.error('Fatal:', err.message));
 } else {
-    console.log('⚡ GitHub Actions mode — runSingleScan() la activare manuală.');
+    console.log('⚡ Importat ca modul — runSingleScan() disponibil.');
 }
