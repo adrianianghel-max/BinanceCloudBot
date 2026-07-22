@@ -1,65 +1,42 @@
-name: Run Scanner
+# GitHub Actions — Binance Gainer Scanner
+# Rulează automat la fiecare 30 min + la fiecare push
+name: Binance Gainer Scanner
 
 on:
   schedule:
-    - cron: "*/15 * * * *"
-  workflow_dispatch:
-
-permissions:
-  contents: write
+    # La fiecare 30 minute (la :00 și :30)
+    - cron: '*/30 * * * *'
+  workflow_dispatch:  # Poți rula manual din GitHub
+  push:
+    branches: [main, master]
 
 jobs:
   scan:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
-      - name: Checkout repository
+      - name: 📥 Checkout repository
         uses: actions/checkout@v4
-
-      - name: Setup Python 3.12
-        uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          persist-credentials: false
+          fetch-depth: 1
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-      - name: Check auto scan state for scheduled runs
-        id: auto_state
-        run: |
-          python - << 'PY'
-          import json
-          import os
-
-          event_name = os.environ.get("GITHUB_EVENT_NAME")
-          should_skip = False
-
-          if event_name == "schedule":
-              try:
-                  with open("config_state.json", "r", encoding="utf-8") as f:
-                      state = json.load(f)
-                  should_skip = not bool(state.get("auto_scan_enabled", True))
-              except Exception:
-                  should_skip = False
-
-          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
-              out.write(f"skip={str(should_skip).lower()}\n")
-          PY
-
-      - name: Run scanner
-        if: steps.auto_state.outputs.skip != 'true'
+      - name: 🔍 Run scanner
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scanner.py
+        run: node binance_scanner.js
 
-      - name: Commit updated alert state
-        if: steps.auto_state.outputs.skip != 'true'
+      - name: 💾 Commit results back to repo
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add last_alerts.json
-          git diff --cached --quiet || git commit -m "chore: update alert state"
-          git push
+          git config user.name "Binance Scanner Bot"
+          git config user.email "bot@binance-scanner.local"
+          git add -A
+          git diff --cached --quiet || git commit -m "🤖 Auto-scan $(date +'%Y-%m-%d %H:%M')"
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:${{ github.ref }}
