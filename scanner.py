@@ -128,10 +128,16 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
         h1_raw = with_retries(exchange.fetch_ohlcv, symbol, "1h", limit=config.H1_LIMIT)
     except ccxt.BaseError as exc:
         logger.warning("Skipping %s after exchange error: %s", symbol, exc)
-        return None
+        return {
+            "symbol": symbol,
+            "error": str(exc),
+        }
 
     if not daily_raw or not h4_raw:
-        return None
+        return {
+            "symbol": symbol,
+            "error": "Missing OHLCV data",
+        }
 
     daily_df = add_ema_columns(prepare_ohlcv_df(daily_raw))
     h4_df = prepare_ohlcv_df(h4_raw)
@@ -141,71 +147,88 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
     daily_ok = daily_strict_ok
 
     ema10_slope = calculate_ema10_slope_pct(daily_df, lookback=config.EMA_SLOPE_LOOKBACK)
-    if ema10_slope is None:
-        return None
-    if ema10_slope < config.MIN_EMA10_SLOPE_PCT:
-        return None
+    ema_slope_ok = ema10_slope is not None and ema10_slope >= config.MIN_EMA10_SLOPE_PCT
 
     macd_line, signal_line = calculate_macd_values(h4_df)
     volume_ratio = calculate_volume_ratio(h4_df, period=config.VOLUME_SMA_PERIOD)
     distance_to_breakout = calculate_distance_to_breakout_pct(h4_df, lookback=config.BREAKOUT_LOOKBACK_4H)
     adx_4h = calculate_adx_value(h4_df, period=config.ADX_PERIOD)
-    if (
-        macd_line is None
-        or signal_line is None
-        or volume_ratio is None
-        or distance_to_breakout is None
-        or adx_4h is None
-    ):
-        return None
 
-    macd_spread_ratio = (macd_line - signal_line) / max(abs(signal_line), abs(macd_line), 1e-8)
-    macd_ok = macd_line > signal_line and macd_spread_ratio >= config.MIN_MACD_SPREAD_RATIO
-    volume_ok = volume_ratio >= config.VOLUME_RATIO_THRESHOLD
-    near_breakout_ok = 0 <= distance_to_breakout <= config.NEAR_BREAKOUT_MAX_DISTANCE_PCT
-    adx_ok = adx_4h >= config.ADX_MIN
+    macd_spread_ratio = None
+    macd_ok = False
+    if macd_line is not None and signal_line is not None:
+        macd_spread_ratio = (macd_line - signal_line) / max(abs(signal_line), abs(macd_line), 1e-8)
+        macd_ok = macd_line > signal_line and macd_spread_ratio >= config.MIN_MACD_SPREAD_RATIO
+
+    volume_ok = volume_ratio is not None and volume_ratio >= config.VOLUME_RATIO_THRESHOLD
+    near_breakout_ok = (
+        distance_to_breakout is not None
+        and 0 <= distance_to_breakout <= config.NEAR_BREAKOUT_MAX_DISTANCE_PCT
+    )
+    adx_ok = adx_4h is not None and adx_4h >= config.ADX_MIN
 
     rsi_current = None
     rsi_ok = True
     vol_up_ok = True
     if config.USE_1H_FILTER and h1_df is not None:
         rsi_current, rsi_previous = calculate_rsi_pair(h1_df, period=config.RSI_PERIOD)
-        if rsi_current is None or rsi_previous is None:
-            return None
-
         rsi_ok = (
-            config.RSI_MIN <= rsi_current <= config.RSI_MAX
+            rsi_current is not None
+            and rsi_previous is not None
+            and config.RSI_MIN <= rsi_current <= config.RSI_MAX
             and rsi_current > rsi_previous
         )
-        vol_up_ok = h1_df["volume"].iloc[-1] > h1_df["volume"].iloc[-2]
+        vol_up_ok = len(h1_df) >= 2 and h1_df["volume"].iloc[-1] > h1_df["volume"].iloc[-2]
+    elif config.USE_1H_FILTER:
+        rsi_ok = False
+        vol_up_ok = False
+
+    score = None
+    if (
+        ema10_slope is not None
+        and macd_spread_ratio is not None
+        and volume_ratio is not None
+        and distance_to_breakout is not None
+    ):
+        score = calculate_growth_score(
+            ema10_slope_pct=ema10_slope,
+            macd_spread_ratio=macd_spread_ratio,
+            volume_ratio=volume_ratio,
+            distance_to_breakout_pct=distance_to_breakout,
+            rsi_value=rsi_current,
+            use_1h_filter=config.USE_1H_FILTER,
+        )
 
     qualified = daily_ok and macd_ok and volume_ok and near_breakout_ok and adx_ok and rsi_ok and vol_up_ok
-    if not qualified:
-        return None
+    price = None
+    if qualified:
+        ticker = with_retries(exchange.fetch_ticker, symbol)
+        price = float(ticker.get("last") or daily_df["close"].iloc[-1])
 
-    ticker = with_retries(exchange.fetch_ticker, symbol)
-    price = float(ticker.get("last") or daily_df["close"].iloc[-1])
-
-    growth_score = calculate_growth_score(
-        ema10_slope_pct=ema10_slope,
-        macd_spread_ratio=macd_spread_ratio,
-        volume_ratio=volume_ratio,
-        distance_to_breakout_pct=distance_to_breakout,
-        rsi_value=rsi_current,
-        use_1h_filter=config.USE_1H_FILTER,
-    )
-
-    return {
+    data = {
         "symbol": symbol,
         "price": price,
-        "daily": "BULLISH" if daily_strict_ok else "EARLY_TREND",
+        "daily": "BULLISH" if daily_strict_ok else "NEUTRAL",
         "ema10_slope": ema10_slope,
         "vol4h": volume_ratio,
-        "macd": f"{macd_line:.5f}/{signal_line:.5f}",
+        "macd": f"{macd_line:.5f}/{signal_line:.5f}" if macd_line is not None and signal_line is not None else "N/A",
+        "macd_spread_ratio": macd_spread_ratio,
         "rsi_1h": f"{rsi_current:.2f}" if rsi_current is not None else "N/A",
         "dist_breakout_pct": distance_to_breakout,
-        "growth_score": growth_score,
+        "adx_4h": adx_4h,
+        "growth_score": score,
+        "daily_ok": daily_ok,
+        "ema_slope_ok": ema_slope_ok,
+        "volume_ok": volume_ok,
+        "rsi_ok": rsi_ok,
+        "macd_ok": macd_ok,
+        "adx_ok": adx_ok,
+        "near_breakout_ok": near_breakout_ok,
+        "vol_up_ok": vol_up_ok,
+        "qualified": qualified,
     }
+
+    return data
 
 
 def print_console_table(rows: list[dict[str, Any]]) -> None:
@@ -234,6 +257,26 @@ def print_console_table(rows: list[dict[str, Any]]) -> None:
         )
 
 
+def print_top20_by_score(rows: list[dict[str, Any]]) -> None:
+    if not rows:
+        logger.info("No rows available for TOP 20 score diagnostic.")
+        return
+
+    header = "Symbol | Score | RSI | EMA10 Slope | Volume Ratio | Distance To Breakout"
+    separator = "-" * len(header)
+    print(header)
+    print(separator)
+    for row in rows[:20]:
+        print(
+            f"{row.get('symbol', 'N/A')} | "
+            f"{_format_float(row.get('growth_score'), 2)} | "
+            f"{row.get('rsi_1h', 'N/A')} | "
+            f"{_format_float(row.get('ema10_slope'), 3)} | "
+            f"{_format_float(row.get('vol4h'), 2)} | "
+            f"{_format_float(row.get('dist_breakout_pct'), 2)}"
+        )
+
+
 def main() -> int:
     exchange = create_exchange()
 
@@ -241,20 +284,92 @@ def main() -> int:
     symbols = get_usdc_symbols(exchange)
     logger.info("Found %s active %s symbols.", len(symbols), config.QUOTE_ASSET)
 
+    logger.info("TELEGRAM_TOKEN_PRESENT=%s", bool(config.TELEGRAM_TOKEN))
+    logger.info("TELEGRAM_CHAT_ID_PRESENT=%s", bool(config.TELEGRAM_CHAT_ID))
+
+    counters = {
+        "TOTAL_SYMBOLS": len(symbols),
+        "AFTER_USDC_FILTER": len(symbols),
+        "AFTER_VOLUME_FILTER": 0,
+        "AFTER_EMA_FILTER": 0,
+        "AFTER_EMA_SLOPE_FILTER": 0,
+        "AFTER_RSI_FILTER": 0,
+        "AFTER_MACD_FILTER": 0,
+        "AFTER_ADX_FILTER": 0,
+        "AFTER_BREAKOUT_FILTER": 0,
+        "AFTER_SCORING_FILTER": 0,
+        "FINAL_QUALIFIED": 0,
+    }
+
     results: list[dict[str, Any]] = []
+    score_pool: list[dict[str, Any]] = []
+    skipped_due_to_error = 0
     for idx, symbol in enumerate(symbols, start=1):
         try:
             logger.info("Analyzing [%s/%s] %s", idx, len(symbols), symbol)
-            result = analyze_symbol(exchange, symbol)
-            if result:
-                results.append(result)
+            diagnostic = analyze_symbol(exchange, symbol)
+            if not diagnostic:
+                continue
+
+            if diagnostic.get("error"):
+                skipped_due_to_error += 1
+                continue
+
+            if diagnostic.get("growth_score") is not None:
+                score_pool.append(diagnostic)
+
+            if not diagnostic.get("volume_ok", False):
+                continue
+            counters["AFTER_VOLUME_FILTER"] += 1
+
+            if not diagnostic.get("daily_ok", False):
+                continue
+            counters["AFTER_EMA_FILTER"] += 1
+
+            if not diagnostic.get("ema_slope_ok", False):
+                continue
+            counters["AFTER_EMA_SLOPE_FILTER"] += 1
+
+            if not diagnostic.get("rsi_ok", False):
+                continue
+            counters["AFTER_RSI_FILTER"] += 1
+
+            if not diagnostic.get("macd_ok", False):
+                continue
+            counters["AFTER_MACD_FILTER"] += 1
+
+            if not diagnostic.get("adx_ok", False):
+                continue
+            counters["AFTER_ADX_FILTER"] += 1
+
+            if not diagnostic.get("near_breakout_ok", False):
+                continue
+            counters["AFTER_BREAKOUT_FILTER"] += 1
+
+            if diagnostic.get("growth_score") is None:
+                continue
+            counters["AFTER_SCORING_FILTER"] += 1
+
+            if not diagnostic.get("vol_up_ok", False):
+                continue
+
+            if diagnostic.get("qualified", False):
+                results.append(diagnostic)
+                counters["FINAL_QUALIFIED"] += 1
         except Exception as exc:  # pylint: disable=broad-except
             logger.error("Error on %s: %s", symbol, exc)
             continue
 
         time.sleep(0.2)
 
-    results.sort(key=lambda x: x["growth_score"], reverse=True)
+    for key, value in counters.items():
+        logger.info("%s=%s", key, value)
+    logger.info("SKIPPED_DUE_TO_ERROR=%s", skipped_due_to_error)
+
+    score_pool.sort(key=lambda x: x.get("growth_score") or 0.0, reverse=True)
+    print_top20_by_score(score_pool)
+
+    results.sort(key=lambda x: x["growth_score"] or 0.0, reverse=True)
     print_console_table(results[: config.CONSOLE_TOP_N])
 
     top_for_telegram = sorted(
@@ -279,7 +394,7 @@ def main() -> int:
                 rows=top_for_telegram,
             )
         except Exception as exc:  # pylint: disable=broad-except
-            logger.error("Telegram error: %s", exc)
+            logger.exception("Telegram error: %s", exc)
             sent = False
         if sent:
             try:

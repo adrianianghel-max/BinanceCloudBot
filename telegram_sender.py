@@ -48,5 +48,11 @@ def send_telegram_message(token: str, chat_id: str, rows: Sequence[dict]) -> boo
         logger.info("Telegram notification sent successfully.")
         return True
     except requests.RequestException as exc:
-        logger.error("Failed to send Telegram message: %s", exc)
+        response_text = ""
+        if getattr(exc, "response", None) is not None:
+            response_text = getattr(exc.response, "text", "")
+        if response_text:
+            logger.error("Failed to send Telegram message: %s | Response: %s", exc, response_text)
+        else:
+            logger.error("Failed to send Telegram message: %s", exc)
         return False
