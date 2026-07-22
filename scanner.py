@@ -67,16 +67,18 @@ def is_leveraged_base(base_asset: str) -> bool:
     return any(upper.endswith(marker) for marker in config.LEVERAGED_TOKENS)
 
 
-def get_usdc_symbols(exchange: ccxt.Exchange) -> list[str]:
+def get_quote_symbols(exchange: ccxt.Exchange, quote_assets: tuple[str, ...]) -> list[str]:
     markets = with_retries(exchange.load_markets)
     symbols = []
+    allowed_quotes = {q.upper() for q in quote_assets}
 
     for symbol, market in markets.items():
         if not market.get("active"):
             continue
         if not market.get("spot"):
             continue
-        if market.get("quote") != config.QUOTE_ASSET:
+        quote = str(market.get("quote", "")).upper()
+        if quote not in allowed_quotes:
             continue
 
         base = market.get("base", "")
@@ -97,7 +99,7 @@ def _format_float(value: Any, precision: int, suffix: str = "") -> str:
         return f"0.{('0' * precision)}{suffix}"
 
 
-def create_exchange() -> ccxt.Exchange:
+def create_exchange() -> tuple[ccxt.Exchange, tuple[str, ...]]:
     exchange_ids = [config.PRIMARY_EXCHANGE_ID, *config.FALLBACK_EXCHANGE_IDS]
     last_error: Exception | None = None
 
@@ -107,9 +109,10 @@ def create_exchange() -> ccxt.Exchange:
             with_retries(exchange.load_markets)
             if exchange_id != config.PRIMARY_EXCHANGE_ID:
                 logger.warning("Falling back to %s because Binance global is unavailable.", exchange_id)
+                return exchange, config.FALLBACK_QUOTE_ASSETS
             else:
                 logger.info("Using primary exchange %s.", exchange_id)
-            return exchange
+                return exchange, config.PRIMARY_QUOTE_ASSETS
         except ccxt.ExchangeNotAvailable as exc:
             logger.warning("Exchange %s unavailable during market load: %s", exchange_id, exc)
             last_error = exc
@@ -278,11 +281,12 @@ def print_top20_by_score(rows: list[dict[str, Any]]) -> None:
 
 
 def main() -> int:
-    exchange = create_exchange()
+    exchange, quote_assets = create_exchange()
 
     logger.info("Loading %s markets...", exchange.id)
-    symbols = get_usdc_symbols(exchange)
-    logger.info("Found %s active %s symbols.", len(symbols), config.QUOTE_ASSET)
+    logger.info("Scanning quote assets: %s", ",".join(quote_assets))
+    symbols = get_quote_symbols(exchange, quote_assets)
+    logger.info("Found %s active spot symbols in selected quotes.", len(symbols))
 
     logger.info("TELEGRAM_TOKEN_PRESENT=%s", bool(config.TELEGRAM_TOKEN))
     logger.info("TELEGRAM_CHAT_ID_PRESENT=%s", bool(config.TELEGRAM_CHAT_ID))
