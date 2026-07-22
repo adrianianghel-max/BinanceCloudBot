@@ -20,7 +20,7 @@ jobs:
           from datetime import datetime, timezone
 
           path = "config_state.json"
-          with open(path, "r", encoding="utf-8") as f:
+          with open(path, "r", encoding="utf-8-sig") as f:
               data = json.load(f)
 
           data["auto_scan_enabled"] = False
@@ -38,7 +38,7 @@ jobs:
           git diff --cached --quiet || git commit -m "chore: stop auto scan"
           git push
 
-            - name: Send Telegram notification (stop)
+      - name: Send Telegram notification (stop)
         continue-on-error: true
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}

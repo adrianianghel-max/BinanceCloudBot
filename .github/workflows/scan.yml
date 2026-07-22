@@ -27,8 +27,33 @@ jobs:
         with:
           node-version: '20'
 
+      - name: 🛑 Check auto scan state
+        id: auto-scan
+        shell: python
+        run: |
+          import json
+          import os
+          from pathlib import Path
+
+          config_path = Path("config_state.json")
+          enabled = True
+
+          if config_path.exists():
+              with config_path.open("r", encoding="utf-8-sig") as fh:
+                  enabled = bool(json.load(fh).get("auto_scan_enabled", True))
+
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
+              fh.write(f"enabled={'true' if enabled else 'false'}\n")
+
+          print(f"auto_scan_enabled={enabled}")
+
       - name: 🔍 Run scanner
+        if: github.event_name != 'schedule' || steps.auto-scan.outputs.enabled == 'true'
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: node binance_scanner.js
+
+      - name: ⏭️ Skip disabled scheduled scan
+        if: github.event_name == 'schedule' && steps.auto-scan.outputs.enabled != 'true'
+        run: echo "Auto scan is disabled in config_state.json. Skipping scheduled run."
