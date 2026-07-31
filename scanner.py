@@ -36,12 +36,17 @@ logger = logging.getLogger("binance_usdc_scanner")
 
 
 def build_exchange(exchange_id: str) -> ccxt.Exchange:
-    return getattr(ccxt, exchange_id)(
-        {
-            "enableRateLimit": True,
-            "options": {"defaultType": "spot"},
+    exchange_params: dict[str, Any] = {
+        "enableRateLimit": True,
+        "options": {"defaultType": "spot"},
+    }
+    if config.PROXY_URL:
+        exchange_params["proxies"] = {
+            "http": config.PROXY_URL,
+            "https": config.PROXY_URL,
         }
-    )
+        logger.info("Using proxy for %s.", exchange_id)
+    return getattr(ccxt, exchange_id)(exchange_params)
 
 
 def with_retries(func, *args, **kwargs):

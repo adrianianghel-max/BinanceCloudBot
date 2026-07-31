@@ -16,13 +16,16 @@ USE_4H_BREAKOUT_FILTER = True   # 🔥 Critic pentru detectarea exploziei cu ~1h
 
 EXCHANGE_ID = "binance"                 # Binance global
 PRIMARY_EXCHANGE_ID = "binance"
-FALLBACK_EXCHANGE_IDS = ("binanceus",)
+FALLBACK_EXCHANGE_IDS = ("bybit", "kraken", "binanceus")
 
 QUOTE_ASSET = "USDC"                    # Doar perechi USDC
 PRIMARY_QUOTE_ASSETS = ("USDC",)
 FALLBACK_QUOTE_ASSETS = ("USDC",)
 
 LEVERAGED_TOKENS = ("UP", "DOWN", "BULL", "BEAR")   # Excludere tokeni levered
+
+# Proxy pentru acces Binance din cloud (ex: BINANCE_PROXY=http://user:pass@host:port)
+PROXY_URL = os.getenv("BINANCE_PROXY", "")
 
 
 # ================================

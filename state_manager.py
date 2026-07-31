@@ -16,7 +16,8 @@ def load_json_state(path: str, default_value: dict[str, Any]) -> dict[str, Any]:
         return default_value
 
     try:
-        with file_path.open("r", encoding="utf-8") as f:
+        # utf-8-sig handles files saved with a UTF-8 BOM (common on Windows)
+        with file_path.open("r", encoding="utf-8-sig") as f:
             data = json.load(f)
             if isinstance(data, dict):
                 return data
@@ -30,7 +31,7 @@ def load_json_state(path: str, default_value: dict[str, Any]) -> dict[str, Any]:
 def save_json_state(path: str, value: dict[str, Any]) -> None:
     file_path = Path(path)
     file_path.parent.mkdir(parents=True, exist_ok=True)
-    with file_path.open("w", encoding="utf-8") as f:
+    with file_path.open("w", encoding="utf-8-sig") as f:
         json.dump(value, f, indent=2)
 
 
