@@ -91,7 +91,7 @@ def detect_explosion_start(h4: pd.DataFrame):
 
 
 def main():
-    ex = ccxt.binanceus({"enableRateLimit": True, "options": {"defaultType": "spot"}})
+    ex = ccxt.binance({"enableRateLimit": True, "options": {"defaultType": "spot"}})
     symbols = get_symbols(ex)
 
     now = datetime.now(timezone.utc)
