@@ -17,6 +17,7 @@ from indicators import (
     calculate_rsi_pair,
     calculate_volume_ratio,
     is_daily_bullish,
+    is_daily_early_trend,
     prepare_ohlcv_df,
 )
 from state_manager import (
@@ -147,7 +148,10 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
     h1_df = prepare_ohlcv_df(h1_raw) if h1_raw else None
 
     daily_strict_ok = is_daily_bullish(daily_df)
-    daily_ok = daily_strict_ok
+    if config.ALLOW_EARLY_TREND:
+        daily_ok = daily_strict_ok or is_daily_early_trend(daily_df)
+    else:
+        daily_ok = daily_strict_ok
 
     ema10_slope = calculate_ema10_slope_pct(daily_df, lookback=config.EMA_SLOPE_LOOKBACK)
     ema_slope_ok = ema10_slope is not None and ema10_slope >= config.MIN_EMA10_SLOPE_PCT

@@ -6,7 +6,7 @@ import os
 
 USE_1H_FILTER = True            # Confirmare trend 1h (EMA + MACD + volum)
 ALERT_ONLY_NEW = True           # Evită alerte duplicate
-ALLOW_EARLY_TREND = False       # Nu intră prea devreme
+ALLOW_EARLY_TREND = True        # Detectează trend timpuriu (~1h înainte de breakout)
 USE_4H_BREAKOUT_FILTER = True   # 🔥 Critic pentru detectarea exploziei cu ~1h înainte
 
 
@@ -55,7 +55,7 @@ MIN_MACD_SPREAD_RATIO = 0.01
 # RSI (pentru impuls sănătos)
 RSI_PERIOD = 14
 RSI_MIN = 55
-RSI_MAX = 72
+RSI_MAX = 80
 
 # Volum (confirmare presiune)
 VOLUME_SMA_PERIOD = 20
