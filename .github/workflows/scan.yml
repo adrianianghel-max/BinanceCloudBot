@@ -2,10 +2,13 @@ name: Binance Gainer Scanner
 
 on:
   schedule:
-    - cron: '*/30 * * * *'
+    - cron: '*/15 * * * *'
   workflow_dispatch:
   push:
     branches: [main, master]
+
+permissions:
+  contents: write
 
 jobs:
   scan:
@@ -17,15 +20,36 @@ jobs:
         uses: actions/checkout@v4
 
       - name: ⚙️ Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.12'
 
       - name: 📦 Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-      - name: 🔍 Run scanner (debug mode)
+      - name: 🔍 Check auto-scan state
+        id: scan_state
+        run: |
+          echo "auto_scan_enabled=$(python -c "import json; print(str(json.load(open('config_state.json')).get('auto_scan_enabled', True)).lower())")" >> "$GITHUB_OUTPUT"
+
+      - name: ⏭️ Skip if auto-scan disabled (scheduled runs only)
+        if: github.event_name == 'schedule' && steps.scan_state.outputs.auto_scan_enabled == 'false'
+        run: echo "Auto scan is disabled. Skipping scanner."
+
+      - name: 🔍 Run scanner
+        if: github.event_name != 'schedule' || steps.scan_state.outputs.auto_scan_enabled != 'false'
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scanner.py || true
+        run: python scanner.py
+
+      - name: 💾 Persist alert state
+        if: github.event_name != 'schedule' || steps.scan_state.outputs.auto_scan_enabled != 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add last_alerts.json
+          git diff --cached --quiet || git commit -m "chore: update alert state"
+          git push
