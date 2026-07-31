@@ -1,27 +1,42 @@
-import os
+# ================================
+#   CORE BEHAVIOR
+# ================================
+
+USE_1H_FILTER = True            # Confirmare trend 1h (EMA + MACD + volum)
+ALERT_ONLY_NEW = True           # Evită alerte duplicate
+ALLOW_EARLY_TREND = False       # Nu intră prea devreme
+USE_4H_BREAKOUT_FILTER = True   # 🔥 Critic pentru detectarea exploziei cu ~1h înainte
 
 
-# Core behavior
-USE_1H_FILTER = True
-ALERT_ONLY_NEW = True
-ALLOW_EARLY_TREND = False
-USE_4H_BREAKOUT_FILTER = True
+# ================================
+#   EXCHANGE SETTINGS
+# ================================
 
-# Exchange settings
-EXCHANGE_ID = "binance"
+EXCHANGE_ID = "binance"                 # Binance global
 PRIMARY_EXCHANGE_ID = "binance"
 FALLBACK_EXCHANGE_IDS = ("binanceus",)
-QUOTE_ASSET = "USDC"
+
+QUOTE_ASSET = "USDC"                    # Doar perechi USDC
 PRIMARY_QUOTE_ASSETS = ("USDC",)
 FALLBACK_QUOTE_ASSETS = ("USDC",)
-LEVERAGED_TOKENS = ("UP", "DOWN", "BULL", "BEAR")
 
-# Candle limits
+LEVERAGED_TOKENS = ("UP", "DOWN", "BULL", "BEAR")   # Excludere tokeni levered
+
+
+# ================================
+#   CANDLE LIMITS
+# ================================
+
 DAILY_LIMIT = 260
 H4_LIMIT = 120
 H1_LIMIT = 120
 
-# Indicator params
+
+# ================================
+#   INDICATOR PARAMETERS
+# ================================
+
+# EMA Trend
 EMA_FAST = 10
 EMA_MID = 50
 EMA_SLOW = 200
@@ -29,30 +44,56 @@ EMA_SLOPE_LOOKBACK = 10
 EMA_MID_SLOPE_LOOKBACK = 5
 MIN_EMA10_SLOPE_PCT = 0.05
 
+# MACD Momentum
 MACD_FAST = 12
 MACD_SLOW = 26
 MACD_SIGNAL = 9
 MIN_MACD_SPREAD_RATIO = 0.01
 
+# RSI (pentru impuls sănătos)
 RSI_PERIOD = 14
 RSI_MIN = 55
 RSI_MAX = 72
+
+# Volum (confirmare presiune)
 VOLUME_SMA_PERIOD = 20
 VOLUME_RATIO_THRESHOLD = 1.2
+
+# Breakout proximity
 BREAKOUT_LOOKBACK_4H = 20
 NEAR_BREAKOUT_MAX_DISTANCE_PCT = 3.0
+
+# ADX (trend valid)
 ADX_PERIOD = 14
 ADX_MIN = 20.0
+
+
+# ================================
+#   CONSOLE
+# ================================
+
 CONSOLE_TOP_N = 10
 
-# Retry / rate-limit handling
+
+# ================================
+#   RETRY / RATE-LIMIT
+# ================================
+
 MAX_RETRIES = 4
 INITIAL_RETRY_DELAY = 1.5
 
-# Telegram env variables
+
+# ================================
+#   TELEGRAM
+# ================================
+
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 
-# State files
+
+# ================================
+#   STATE FILES
+# ================================
+
 LAST_ALERTS_PATH = "last_alerts.json"
 CONFIG_STATE_PATH = "config_state.json"
