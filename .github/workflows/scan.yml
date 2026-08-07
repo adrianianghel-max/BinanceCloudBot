@@ -1,8 +1,8 @@
-name: Binance Gainer Scanner
+name: Auto Scan
 
 on:
   schedule:
-    - cron: '*/15 * * * *'
+    - cron: "*/15 * * * *"
   workflow_dispatch:
   push:
     branches: [main, master]
@@ -12,12 +12,17 @@ permissions:
 
 jobs:
   scan:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
       - name: 📥 Checkout repository
         uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
       - name: 📦 Install dependencies
         shell: bash
@@ -30,11 +35,6 @@ jobs:
         shell: bash
         run: |
           echo "auto_scan_enabled=$(python -c "import json; print(str(json.load(open('config_state.json')).get('auto_scan_enabled', True)).lower())")" >> "$GITHUB_OUTPUT"
-
-      - name: ⏭️ Skip if auto-scan disabled (scheduled runs only)
-        if: github.event_name == 'schedule' && steps.scan_state.outputs.auto_scan_enabled == 'false'
-        shell: bash
-        run: echo "Auto scan is disabled. Skipping scanner."
 
       - name: 🔍 Run scanner
         if: github.event_name != 'schedule' || steps.scan_state.outputs.auto_scan_enabled != 'false'
