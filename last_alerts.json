@@ -1,6 +1,10 @@
 ﻿{
   "top_symbols": [
-    "XMR/USDC"
+    "BNB/USDC",
+    "VET/USDC",
+    "XMR/USDC",
+    "PENGU/USDC",
+    "MANA/USDC"
   ],
-  "updated_at": "2026-08-08T01:13:11.740335+00:00"
+  "updated_at": "2026-08-08T19:19:24.345186+00:00"
 }
