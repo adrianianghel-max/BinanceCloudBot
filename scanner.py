@@ -385,9 +385,10 @@ def main() -> int:
     results.sort(key=lambda x: x["growth_score"] or 0.0, reverse=True)
     print_console_table(results[: config.CONSOLE_TOP_N])
 
+    # TOP 5 candidați după scorul de creștere (din score_pool, nu doar cei fully-qualified)
     top_for_telegram = sorted(
-        results,
-        key=lambda x: (x["ema10_slope"], x["vol4h"]),
+        score_pool,
+        key=lambda x: x.get("growth_score") or 0.0,
         reverse=True,
     )[:5]
 

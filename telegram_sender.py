@@ -8,20 +8,47 @@ import requests
 
 logger = logging.getLogger(__name__)
 
+BINANCE_TRADE_URL = "https://www.binance.com/en/trade/{base}_{quote}"
 
-def _build_telegram_table(rows: Sequence[dict]) -> str:
-    header = "Symbol | Price | Daily | EMA10 Slope | Vol 4H | MACD | RSI 1H | Growth"
-    separator = "-" * len(header)
-    lines = [header, separator]
 
-    for row in rows:
+def format_symbol_no_slash(symbol: str) -> str:
+    """Converts '1000CAT/USDC' to '1000CATUSDC'."""
+    return symbol.replace("/", "")
+
+
+def _binance_url_for_symbol(symbol: str) -> str:
+    base, quote = symbol.split("/")
+    return BINANCE_TRADE_URL.format(base=base, quote=quote)
+
+
+def _build_telegram_top5(rows: Sequence[dict]) -> str:
+    lines = ["🚀 TOP 5 USDC - BREAKOUT ~1h", ""]
+    for idx, row in enumerate(rows, start=1):
+        symbol_clean = format_symbol_no_slash(row["symbol"])
         lines.append(
-            f"{row['symbol']} | {row['price']:.6f} | {row['daily']} | "
-            f"{row['ema10_slope']:.3f}% | {row['vol4h']:.2f}x | {row['macd']} | "
-            f"{row['rsi_1h']} | {row['growth_score']:.2f}%"
+            f"{idx}. <b>{symbol_clean}</b>\n"
+            f"   Scor: <b>{row.get('growth_score', 0):.2f}%</b> | "
+            f"RSI: {row.get('rsi_1h', 'N/A')} | "
+            f"EMA10: {row.get('ema10_slope', 0):.2f}% | "
+            f"Vol: {row.get('vol4h', 0):.2f}x | "
+            f"Dist breakout: {row.get('dist_breakout_pct', 0):.2f}%"
         )
+    return "\n\n".join(lines)
 
-    return "\n".join(lines)
+
+def _build_inline_keyboard(rows: Sequence[dict]) -> list[list[dict]]:
+    keyboard = []
+    for row in rows:
+        symbol_clean = format_symbol_no_slash(row["symbol"])
+        keyboard.append(
+            [
+                {
+                    "text": f"🔗 {symbol_clean} pe Binance",
+                    "url": _binance_url_for_symbol(row["symbol"]),
+                }
+            ]
+        )
+    return keyboard
 
 
 def send_telegram_message(token: str, chat_id: str, rows: Sequence[dict]) -> bool:
@@ -33,19 +60,20 @@ def send_telegram_message(token: str, chat_id: str, rows: Sequence[dict]) -> boo
         logger.info("No rows to send to Telegram.")
         return False
 
-    message = "Top 5 Binance USDC candidates\n\n" + "<pre>" + _build_telegram_table(rows) + "</pre>"
+    message = _build_telegram_top5(rows)
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     payload = {
         "chat_id": chat_id,
         "text": message,
         "parse_mode": "HTML",
         "disable_web_page_preview": True,
+        "reply_markup": {"inline_keyboard": _build_inline_keyboard(rows)},
     }
 
     try:
-        response = requests.post(url, data=payload, timeout=20)
+        response = requests.post(url, json=payload, timeout=20)
         response.raise_for_status()
-        logger.info("Telegram notification sent successfully.")
+        logger.info("Telegram notification sent successfully with Binance links.")
         return True
     except requests.RequestException as exc:
         response_text = ""
