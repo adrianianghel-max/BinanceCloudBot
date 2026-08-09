@@ -1,10 +1,10 @@
 ﻿{
   "top_symbols": [
-    "PENGU/USDC",
-    "XMR/USDC",
-    "FARTCOIN/USDC",
     "BNB/USDC",
-    "S/USDC"
+    "FARTCOIN/USDC",
+    "S/USDC",
+    "SHIB/USDC",
+    "VET/USDC"
   ],
-  "updated_at": "2026-08-09T17:51:08.247913+00:00"
+  "updated_at": "2026-08-09T20:30:04.970931+00:00"
 }
