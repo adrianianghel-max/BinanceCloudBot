@@ -1,10 +1,10 @@
 ﻿{
   "top_symbols": [
     "EUROP/USDC",
-    "DOT/USDC",
     "BTC/USDC",
     "EURC/USDC",
-    "SHIB/USDC"
+    "SHIB/USDC",
+    "ALGO/USDC"
   ],
-  "updated_at": "2026-08-10T13:45:30.537127+00:00"
+  "updated_at": "2026-08-10T14:46:47.226350+00:00"
 }
