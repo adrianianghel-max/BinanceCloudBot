@@ -1,10 +1,10 @@
 ﻿{
   "top_symbols": [
-    "CASH/USDC",
     "ATOM/USDC",
     "BNB/USDC",
-    "USDG/USDC",
-    "EURC/USDC"
+    "CASH/USDC",
+    "RLUSD/USDC",
+    "DOGE/USDC"
   ],
-  "updated_at": "2026-08-11T18:38:11.635300+00:00"
+  "updated_at": "2026-08-11T20:29:27.798111+00:00"
 }
