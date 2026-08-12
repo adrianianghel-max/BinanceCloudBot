@@ -1,10 +1,10 @@
 ﻿{
   "top_symbols": [
     "LINK/USDC",
+    "BNB/USDC",
     "ETH/USDC",
-    "VIRTUAL/USDC",
-    "EURC/USDC",
-    "TON/USDC"
+    "EUROP/USDC",
+    "EURC/USDC"
   ],
-  "updated_at": "2026-08-12T15:31:47.971314+00:00"
+  "updated_at": "2026-08-12T16:30:02.154277+00:00"
 }
