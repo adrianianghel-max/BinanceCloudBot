@@ -1,10 +1,10 @@
 ﻿{
   "top_symbols": [
-    "USDE/USDC",
     "LINK/USDC",
-    "XMR/USDC",
     "BNB/USDC",
-    "ATOM/USDC"
+    "ATOM/USDC",
+    "DOGE/USDC",
+    "EUROP/USDC"
   ],
-  "updated_at": "2026-08-12T07:19:08.511676+00:00"
+  "updated_at": "2026-08-12T08:48:41.919406+00:00"
 }
