@@ -2,9 +2,9 @@
   "top_symbols": [
     "LINK/USDC",
     "ETH/USDC",
+    "VIRTUAL/USDC",
     "EURC/USDC",
-    "BNB/USDC",
-    "FARTCOIN/USDC"
+    "TON/USDC"
   ],
-  "updated_at": "2026-08-12T14:22:19.875618+00:00"
+  "updated_at": "2026-08-12T15:31:47.971314+00:00"
 }
