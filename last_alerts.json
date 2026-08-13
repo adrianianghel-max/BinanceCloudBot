@@ -1,10 +1,10 @@
 ﻿{
   "top_symbols": [
-    "XMR/USDC",
     "ATOM/USDC",
     "PEAQ/USDC",
-    "USD1/USDC",
-    "RLUSD/USDC"
+    "XMR/USDC",
+    "PENGU/USDC",
+    "FARTCOIN/USDC"
   ],
-  "updated_at": "2026-08-13T17:56:43.951680+00:00"
+  "updated_at": "2026-08-13T18:58:31.735906+00:00"
 }
