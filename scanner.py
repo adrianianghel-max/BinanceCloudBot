@@ -209,6 +209,9 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
             distance_to_breakout_pct=distance_to_breakout,
             rsi_value=rsi_current,
             use_1h_filter=config.USE_1H_FILTER,
+            breakout_max_distance_pct=config.NEAR_BREAKOUT_MAX_DISTANCE_PCT,
+            rsi_min=config.RSI_MIN,
+            rsi_max=config.RSI_MAX,
         )
 
     qualified = daily_ok and macd_ok and volume_ok and near_breakout_ok and adx_ok and rsi_ok and vol_up_ok
@@ -328,7 +331,8 @@ def main() -> int:
                 skipped_due_to_error += 1
                 continue
 
-            if diagnostic.get("growth_score") is not None:
+            growth_score = diagnostic.get("growth_score")
+            if growth_score is not None and growth_score >= config.MIN_GROWTH_SCORE_TO_DISPLAY:
                 score_pool.append(diagnostic)
 
             if not diagnostic.get("volume_ok", False):
@@ -359,7 +363,7 @@ def main() -> int:
                 continue
             counters["AFTER_BREAKOUT_FILTER"] += 1
 
-            if diagnostic.get("growth_score") is None:
+            if growth_score is None or growth_score < config.MIN_GROWTH_SCORE_TO_DISPLAY:
                 continue
             counters["AFTER_SCORING_FILTER"] += 1
 

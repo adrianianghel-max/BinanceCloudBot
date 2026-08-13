@@ -47,7 +47,7 @@ EMA_MID = 50
 EMA_SLOW = 200
 EMA_SLOPE_LOOKBACK = 10
 EMA_MID_SLOPE_LOOKBACK = 5
-MIN_EMA10_SLOPE_PCT = 0.05
+MIN_EMA10_SLOPE_PCT = 0.03
 
 # MACD Momentum
 MACD_FAST = 12
@@ -57,16 +57,16 @@ MIN_MACD_SPREAD_RATIO = 0.01
 
 # RSI (pentru impuls sănătos)
 RSI_PERIOD = 14
-RSI_MIN = 55
+RSI_MIN = 52
 RSI_MAX = 80
 
 # Volum (confirmare presiune)
 VOLUME_SMA_PERIOD = 20
-VOLUME_RATIO_THRESHOLD = 1.2
+VOLUME_RATIO_THRESHOLD = 1.1
 
 # Breakout proximity
 BREAKOUT_LOOKBACK_4H = 20
-NEAR_BREAKOUT_MAX_DISTANCE_PCT = 3.0
+NEAR_BREAKOUT_MAX_DISTANCE_PCT = 5.0
 
 # ADX (trend valid)
 ADX_PERIOD = 14
@@ -78,6 +78,7 @@ ADX_MIN = 20.0
 # ================================
 
 CONSOLE_TOP_N = 10
+MIN_GROWTH_SCORE_TO_DISPLAY = 70.0
 
 
 # ================================

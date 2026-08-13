@@ -165,6 +165,9 @@ def calculate_growth_score(
     distance_to_breakout_pct: float,
     rsi_value: Optional[float],
     use_1h_filter: bool,
+    breakout_max_distance_pct: float = 3.0,
+    rsi_min: float = 55.0,
+    rsi_max: float = 80.0,
 ) -> float:
     # Pre-breakout scoring with explicit weights totaling 100 points.
     slope_norm = min(max(ema10_slope_pct / 0.5, 0.0), 1.0)
@@ -176,12 +179,17 @@ def calculate_growth_score(
     macd_norm = min(max(macd_spread_ratio / 0.03, 0.0), 1.0)
     macd_score = macd_norm * 20.0
 
-    near_breakout_norm = min(max((3.0 - max(distance_to_breakout_pct, 0.0)) / 3.0, 0.0), 1.0)
+    breakout_window = max(breakout_max_distance_pct, 0.1)
+    near_breakout_norm = min(
+        max((breakout_window - max(distance_to_breakout_pct, 0.0)) / breakout_window, 0.0),
+        1.0,
+    )
     near_breakout_score = near_breakout_norm * 15.0
 
     if use_1h_filter:
         rsi_base = rsi_value if rsi_value is not None else 50.0
-        rsi_norm = min(max((rsi_base - 55.0) / 17.0, 0.0), 1.0)
+        rsi_window = max(rsi_max - rsi_min, 1.0)
+        rsi_norm = min(max((rsi_base - rsi_min) / rsi_window, 0.0), 1.0)
         rsi_score = rsi_norm * 10.0
     else:
         rsi_score = 10.0
