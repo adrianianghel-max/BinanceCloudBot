@@ -22,6 +22,8 @@ from indicators import (
     is_golden_cross_ema9_21,
     prepare_ohlcv_df,
 )
+from ml_optimizer import load_model, predict_win_probability
+from outcome_tracker import record_signal
 from state_manager import (
     get_alert_state,
     should_send_only_new,
@@ -132,7 +134,7 @@ def create_exchange() -> tuple[ccxt.Exchange, tuple[str, ...]]:
     raise last_error
 
 
-def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | None:
+def analyze_symbol(exchange: ccxt.Exchange, symbol: str, ml_bundle: dict | None = None) -> dict[str, Any] | None:
     try:
         daily_raw = with_retries(exchange.fetch_ohlcv, symbol, "1d", limit=config.DAILY_LIMIT)
         h4_raw = with_retries(exchange.fetch_ohlcv, symbol, "4h", limit=config.H4_LIMIT)
@@ -222,8 +224,33 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
             use_1h_filter=config.USE_1H_FILTER,
         )
 
-    qualified = daily_ok and macd_ok and volume_ok and near_breakout_ok and adx_ok and rsi_ok and vol_up_ok and golden_cross_ok
+    # ML probability (P(WINNER)) — None when model not yet trained
+    ml_features = {
+        "ema10_slope": ema10_slope,
+        "macd_spread_ratio": macd_spread_ratio,
+        "vol4h": volume_ratio,
+        "dist_breakout_pct": distance_to_breakout,
+        "adx_4h": adx_4h,
+        "growth_score": score,
+        "golden_cross_ok": float(golden_cross_ok),
+    }
+    ml_prob = predict_win_probability(ml_features, ml_bundle)
+
+    # Hybrid score: blend rules-based score with ML probability
+    # When model available: 40% rules + 60% ML.  When not: 100% rules.
+    if score is not None and ml_prob is not None:
+        final_score = 0.4 * score + 0.6 * (ml_prob * 100.0)
+    else:
+        final_score = score
+
+    # If ML model is available and confident, add an extra gate
+    ml_gate_ok = True
+    if ml_prob is not None and config.USE_ML_GATE:
+        ml_gate_ok = ml_prob >= config.ML_MIN_WIN_PROBABILITY
+
+    qualified = daily_ok and macd_ok and volume_ok and near_breakout_ok and adx_ok and rsi_ok and vol_up_ok and golden_cross_ok and ml_gate_ok
     price = None
+    ml_prob = ml_prob  # already computed above
     if qualified:
         ticker = with_retries(exchange.fetch_ticker, symbol)
         price = float(ticker.get("last") or daily_df["close"].iloc[-1])
@@ -240,6 +267,8 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
         "dist_breakout_pct": distance_to_breakout,
         "adx_4h": adx_4h,
         "growth_score": score,
+        "ml_prob": ml_prob,
+        "final_score": final_score,
         "daily_ok": daily_ok,
         "ema_slope_ok": ema_slope_ok,
         "volume_ok": volume_ok,
@@ -249,8 +278,16 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
         "near_breakout_ok": near_breakout_ok,
         "vol_up_ok": vol_up_ok,
         "golden_cross_ok": golden_cross_ok,
+        "ml_gate_ok": ml_gate_ok,
         "qualified": qualified,
     }
+
+    # Record qualified signals for ML feedback loop
+    if qualified and price is not None:
+        try:
+            record_signal(symbol, price, ml_features)
+        except Exception as exc:  # pylint: disable=broad-except
+            logger.warning("Could not record signal for %s: %s", symbol, exc)
 
     return data
 
@@ -286,14 +323,18 @@ def print_top20_by_score(rows: list[dict[str, Any]]) -> None:
         logger.info("No rows available for TOP 20 score diagnostic.")
         return
 
-    header = "Symbol | Score | RSI | EMA10 Slope | Volume Ratio | Distance To Breakout"
+    header = "Symbol | Final Score | Growth Score | ML Prob | RSI | EMA10 Slope | Volume Ratio | Distance To Breakout"
     separator = "-" * len(header)
     print(header)
     print(separator)
     for row in rows[:20]:
+        ml_prob = row.get("ml_prob")
+        ml_prob_str = f"{ml_prob * 100:.1f}%" if ml_prob is not None else "N/A"
         print(
             f"{row.get('symbol', 'N/A')} | "
+            f"{_format_float(row.get('final_score'), 2)} | "
             f"{_format_float(row.get('growth_score'), 2)} | "
+            f"{ml_prob_str} | "
             f"{row.get('rsi_1h', 'N/A')} | "
             f"{_format_float(row.get('ema10_slope'), 3)} | "
             f"{_format_float(row.get('vol4h'), 2)} | "
@@ -311,6 +352,14 @@ def main() -> int:
 
     logger.info("TELEGRAM_TOKEN_PRESENT=%s", bool(config.TELEGRAM_TOKEN))
     logger.info("TELEGRAM_CHAT_ID_PRESENT=%s", bool(config.TELEGRAM_CHAT_ID))
+
+    # Load ML model once for the full scan (None = model not yet trained)
+    ml_bundle = load_model()
+    if ml_bundle is not None:
+        logger.info("ML model loaded from %s. ML gate active (threshold=%.0f%%).",
+                    config.MODEL_PATH, config.ML_MIN_WIN_PROBABILITY * 100)
+    else:
+        logger.info("No ML model found. Running in rules-only mode.")
 
     counters = {
         "TOTAL_SYMBOLS": len(symbols),
@@ -333,7 +382,7 @@ def main() -> int:
     for idx, symbol in enumerate(symbols, start=1):
         try:
             logger.info("Analyzing [%s/%s] %s", idx, len(symbols), symbol)
-            diagnostic = analyze_symbol(exchange, symbol)
+            diagnostic = analyze_symbol(exchange, symbol, ml_bundle=ml_bundle)
             if not diagnostic:
                 continue
 
@@ -396,16 +445,16 @@ def main() -> int:
         logger.info("%s=%s", key, value)
     logger.info("SKIPPED_DUE_TO_ERROR=%s", skipped_due_to_error)
 
-    score_pool.sort(key=lambda x: x.get("growth_score") or 0.0, reverse=True)
+    score_pool.sort(key=lambda x: x.get("final_score") or 0.0, reverse=True)
     print_top20_by_score(score_pool)
 
-    results.sort(key=lambda x: x["growth_score"] or 0.0, reverse=True)
+    results.sort(key=lambda x: x.get("final_score") or 0.0, reverse=True)
     print_console_table(results[: config.CONSOLE_TOP_N])
 
-    # TOP 5 candidați după scorul de creștere (din score_pool, nu doar cei fully-qualified)
+    # TOP 5 candidați după scorul final hibrid (din score_pool, nu doar cei fully-qualified)
     top_for_telegram = sorted(
         score_pool,
-        key=lambda x: x.get("growth_score") or 0.0,
+        key=lambda x: x.get("final_score") or 0.0,
         reverse=True,
     )[:5]
 

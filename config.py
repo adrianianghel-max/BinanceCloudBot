@@ -53,6 +53,11 @@ MIN_EMA10_SLOPE_PCT = 0.05
 USE_GOLDEN_CROSS_FILTER = True      # Activează filtrul Golden Cross EMA9 > EMA21 pe 4h
 GOLDEN_CROSS_CONFIRM_CANDLES = 1    # Câte lumânări anterioare confirmă crossover-ul
 
+# ML Self-Calibration
+USE_ML_GATE = True                  # Activează filtrul de probabilitate ML
+ML_MIN_WIN_PROBABILITY = 0.60       # P(WINNER) minim acceptat (0.0–1.0); ignorat dacă model.pkl absent
+MODEL_PATH = "model.pkl"            # Calea la modelul ML antrenat
+
 # MACD Momentum
 MACD_FAST = 12
 MACD_SLOW = 26

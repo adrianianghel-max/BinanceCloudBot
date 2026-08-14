@@ -27,13 +27,22 @@ def _build_telegram_top5(rows: Sequence[dict]) -> str:
         symbol_clean = format_symbol_no_slash(row["symbol"])
         golden_cross_flag = "✅ Golden Cross EMA9>EMA21" if row.get("golden_cross_ok") else ""
         golden_line = f"\n   {golden_cross_flag}" if golden_cross_flag else ""
+
+        ml_prob = row.get("ml_prob")
+        ml_line = ""
+        if ml_prob is not None:
+            ml_emoji = "🤖" if ml_prob >= 0.6 else "⚠️"
+            ml_line = f"\n   {ml_emoji} ML Win Prob: <b>{ml_prob * 100:.1f}%</b>"
+
+        final_score = row.get("final_score") or row.get("growth_score") or 0
         lines.append(
             f"{idx}. <b>{symbol_clean}</b>\n"
-            f"   Scor: <b>{row.get('growth_score', 0):.2f}%</b> | "
+            f"   Scor: <b>{final_score:.2f}%</b> | "
             f"RSI: {row.get('rsi_1h', 'N/A')} | "
             f"EMA10: {row.get('ema10_slope', 0):.2f}% | "
             f"Vol: {row.get('vol4h', 0):.2f}x | "
             f"Dist breakout: {row.get('dist_breakout_pct', 0):.2f}%"
+            f"{ml_line}"
             f"{golden_line}"
         )
     return "\n\n".join(lines)
