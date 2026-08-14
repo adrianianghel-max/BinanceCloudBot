@@ -2,9 +2,9 @@
   "top_symbols": [
     "EURC/USDC",
     "XDC/USDC",
-    "BNB/USDC",
-    "PENGU/USDC",
-    "FARTCOIN/USDC"
+    "FARTCOIN/USDC",
+    "ETH/USDC",
+    "ATOM/USDC"
   ],
-  "updated_at": "2026-08-14T15:34:11.339457+00:00"
+  "updated_at": "2026-08-14T16:34:21.463138+00:00"
 }
