@@ -1,10 +1,10 @@
 ﻿{
   "top_symbols": [
-    "ATOM/USDC",
     "XDC/USDC",
+    "ATOM/USDC",
     "EURC/USDC",
     "FARTCOIN/USDC",
-    "LINK/USDC"
+    "EUROP/USDC"
   ],
-  "updated_at": "2026-08-14T10:42:38.365433+00:00"
+  "updated_at": "2026-08-14T12:11:25.229989+00:00"
 }
