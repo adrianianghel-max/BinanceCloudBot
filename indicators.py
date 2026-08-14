@@ -135,7 +135,7 @@ def is_golden_cross_ema9_21(
     return bullish_trend
 
 
-
+def is_4h_breakout(df: pd.DataFrame, lookback: int = 20) -> bool:
     if len(df) < lookback + 2:
         return False
 
