@@ -1,10 +1,10 @@
 ﻿{
   "top_symbols": [
-    "RLUSD/USDC",
     "LINK/USDC",
     "XDC/USDC",
+    "CASH/USDC",
     "EURC/USDC",
     "ATOM/USDC"
   ],
-  "updated_at": "2026-08-14T20:40:38.862274+00:00"
+  "updated_at": "2026-08-14T21:51:19.217382+00:00"
 }
