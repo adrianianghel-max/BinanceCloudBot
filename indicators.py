@@ -23,6 +23,13 @@ def add_ema_columns(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
+def add_intraday_ema_columns(df: pd.DataFrame, fast_length: int = 9, slow_length: int = 21) -> pd.DataFrame:
+    out = df.copy()
+    out[f"ema{fast_length}"] = ta.ema(out["close"], length=fast_length)
+    out[f"ema{slow_length}"] = ta.ema(out["close"], length=slow_length)
+    return out
+
+
 def calculate_ema10_slope_pct(df: pd.DataFrame, lookback: int = 10) -> Optional[float]:
     if len(df) < lookback + 1:
         return None
@@ -158,6 +165,21 @@ def calculate_rsi_pair(df: pd.DataFrame, period: int = 14) -> tuple[Optional[flo
     return float(current_rsi), float(previous_rsi)
 
 
+def is_bullish_ema_cross(df: pd.DataFrame, fast_col: str = "ema9", slow_col: str = "ema21") -> bool:
+    if len(df) < 2 or fast_col not in df.columns or slow_col not in df.columns:
+        return False
+
+    fast_now = df[fast_col].iloc[-1]
+    slow_now = df[slow_col].iloc[-1]
+    fast_prev = df[fast_col].iloc[-2]
+    slow_prev = df[slow_col].iloc[-2]
+
+    if pd.isna(fast_now) or pd.isna(slow_now) or pd.isna(fast_prev) or pd.isna(slow_prev):
+        return False
+
+    return bool(fast_prev <= slow_prev and fast_now > slow_now)
+
+
 def calculate_growth_score(
     ema10_slope_pct: float,
     macd_spread_ratio: float,
@@ -165,6 +187,7 @@ def calculate_growth_score(
     distance_to_breakout_pct: float,
     rsi_value: Optional[float],
     use_1h_filter: bool,
+    ema_cross_signal: bool = False,
 ) -> float:
     # Pre-breakout scoring with explicit weights totaling 100 points.
     slope_norm = min(max(ema10_slope_pct / 0.5, 0.0), 1.0)
@@ -181,6 +204,8 @@ def calculate_growth_score(
 
     if use_1h_filter:
         rsi_base = rsi_value if rsi_value is not None else 50.0
+        if ema_cross_signal:
+            rsi_base = max(rsi_base, 58.0)
         rsi_norm = min(max((rsi_base - 55.0) / 17.0, 0.0), 1.0)
         rsi_score = rsi_norm * 10.0
     else:

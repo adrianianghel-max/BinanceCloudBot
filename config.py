@@ -60,6 +60,11 @@ RSI_PERIOD = 14
 RSI_MIN = 55
 RSI_MAX = 80
 
+# EMA cross 1H (intrare mai devreme)
+H1_EMA_FAST = 9
+H1_EMA_SLOW = 21
+USE_1H_EMA_GOLDEN_CROSS = True
+
 # Volum (confirmare presiune)
 VOLUME_SMA_PERIOD = 20
 VOLUME_RATIO_THRESHOLD = 1.2

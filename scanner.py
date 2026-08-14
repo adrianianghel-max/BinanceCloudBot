@@ -9,6 +9,7 @@ import ccxt
 import config
 from indicators import (
     add_ema_columns,
+    add_intraday_ema_columns,
     calculate_adx_value,
     calculate_distance_to_breakout_pct,
     calculate_ema10_slope_pct,
@@ -18,6 +19,7 @@ from indicators import (
     calculate_volume_ratio,
     is_daily_bullish,
     is_daily_early_trend,
+    is_bullish_ema_cross,
     prepare_ohlcv_df,
 )
 from state_manager import (
@@ -150,7 +152,15 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
 
     daily_df = add_ema_columns(prepare_ohlcv_df(daily_raw))
     h4_df = prepare_ohlcv_df(h4_raw)
-    h1_df = prepare_ohlcv_df(h1_raw) if h1_raw else None
+    h1_df = (
+        add_intraday_ema_columns(
+            prepare_ohlcv_df(h1_raw),
+            fast_length=config.H1_EMA_FAST,
+            slow_length=config.H1_EMA_SLOW,
+        )
+        if h1_raw
+        else None
+    )
 
     daily_strict_ok = is_daily_bullish(daily_df)
     if config.ALLOW_EARLY_TREND:
@@ -182,6 +192,10 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
     rsi_current = None
     rsi_ok = True
     vol_up_ok = True
+    ema_cross_1h_ok = False
+    h1_signal_ok = True
+    h1_signal_name = "DISABLED"
+    ema_cross_label = f"EMA{config.H1_EMA_FAST}x{config.H1_EMA_SLOW}"
     if config.USE_1H_FILTER and h1_df is not None:
         rsi_current, rsi_previous = calculate_rsi_pair(h1_df, period=config.RSI_PERIOD)
         rsi_ok = (
@@ -191,9 +205,25 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
             and rsi_current > rsi_previous
         )
         vol_up_ok = len(h1_df) >= 2 and h1_df["volume"].iloc[-1] > h1_df["volume"].iloc[-2]
+        ema_cross_1h_ok = config.USE_1H_EMA_GOLDEN_CROSS and is_bullish_ema_cross(
+            h1_df,
+            fast_col=f"ema{config.H1_EMA_FAST}",
+            slow_col=f"ema{config.H1_EMA_SLOW}",
+        )
+        h1_signal_ok = vol_up_ok and (rsi_ok or ema_cross_1h_ok)
+        if rsi_ok and ema_cross_1h_ok:
+            h1_signal_name = f"RSI+{ema_cross_label}"
+        elif ema_cross_1h_ok:
+            h1_signal_name = ema_cross_label
+        elif rsi_ok:
+            h1_signal_name = "RSI"
+        else:
+            h1_signal_name = "NONE"
     elif config.USE_1H_FILTER:
         rsi_ok = False
         vol_up_ok = False
+        h1_signal_ok = False
+        h1_signal_name = "NONE"
 
     score = None
     if (
@@ -209,9 +239,10 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
             distance_to_breakout_pct=distance_to_breakout,
             rsi_value=rsi_current,
             use_1h_filter=config.USE_1H_FILTER,
+            ema_cross_signal=ema_cross_1h_ok,
         )
 
-    qualified = daily_ok and macd_ok and volume_ok and near_breakout_ok and adx_ok and rsi_ok and vol_up_ok
+    qualified = daily_ok and macd_ok and volume_ok and near_breakout_ok and adx_ok and h1_signal_ok
     price = None
     if qualified:
         ticker = with_retries(exchange.fetch_ticker, symbol)
@@ -226,6 +257,8 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
         "macd": f"{macd_line:.5f}/{signal_line:.5f}" if macd_line is not None and signal_line is not None else "N/A",
         "macd_spread_ratio": macd_spread_ratio,
         "rsi_1h": f"{rsi_current:.2f}" if rsi_current is not None else "N/A",
+        "ema_fast_1h": h1_df[f"ema{config.H1_EMA_FAST}"].iloc[-1] if h1_df is not None else None,
+        "ema_slow_1h": h1_df[f"ema{config.H1_EMA_SLOW}"].iloc[-1] if h1_df is not None else None,
         "dist_breakout_pct": distance_to_breakout,
         "adx_4h": adx_4h,
         "growth_score": score,
@@ -233,6 +266,9 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
         "ema_slope_ok": ema_slope_ok,
         "volume_ok": volume_ok,
         "rsi_ok": rsi_ok,
+        "ema_cross_1h_ok": ema_cross_1h_ok,
+        "h1_signal_ok": h1_signal_ok,
+        "signal_1h": h1_signal_name,
         "macd_ok": macd_ok,
         "adx_ok": adx_ok,
         "near_breakout_ok": near_breakout_ok,
@@ -306,7 +342,7 @@ def main() -> int:
         "AFTER_VOLUME_FILTER": 0,
         "AFTER_EMA_FILTER": 0,
         "AFTER_EMA_SLOPE_FILTER": 0,
-        "AFTER_RSI_FILTER": 0,
+        "AFTER_1H_FILTER": 0,
         "AFTER_MACD_FILTER": 0,
         "AFTER_ADX_FILTER": 0,
         "AFTER_BREAKOUT_FILTER": 0,
@@ -343,9 +379,9 @@ def main() -> int:
                 continue
             counters["AFTER_EMA_SLOPE_FILTER"] += 1
 
-            if not diagnostic.get("rsi_ok", False):
+            if not diagnostic.get("h1_signal_ok", False):
                 continue
-            counters["AFTER_RSI_FILTER"] += 1
+            counters["AFTER_1H_FILTER"] += 1
 
             if not diagnostic.get("macd_ok", False):
                 continue
@@ -362,9 +398,6 @@ def main() -> int:
             if diagnostic.get("growth_score") is None:
                 continue
             counters["AFTER_SCORING_FILTER"] += 1
-
-            if not diagnostic.get("vol_up_ok", False):
-                continue
 
             if diagnostic.get("qualified", False):
                 results.append(diagnostic)

@@ -12,16 +12,16 @@ Automated Binance Spot USDC scanner for GitHub Actions (Python 3.12), with Teleg
   - EMA10 slope over last 10 daily candles
 - 4H filter:
   - `MACD line > Signal line`
-  - Current volume > `1.5 x SMA20(volume)`
+  - Current volume > `1.2 x SMA20(volume)`
 - Optional 1H filter (configurable in `config.py`):
-  - `RSI(14) > 55`
-  - RSI increasing vs previous candle
+  - `RSI(14)` between `55` and `80`, with RSI increasing vs previous candle
+  - or early trigger on `EMA9` crossing up over `EMA21`
   - Volume increasing
 - Transparent growth score (0-100%) based on:
   - Daily EMA10 slope
   - 4H MACD strength
   - 4H volume spike
-  - 1H RSI contribution
+  - 1H RSI / EMA cross contribution
 - Console markdown table output sorted by Growth Score
 - Telegram message with Top 5 sorted by EMA10 slope, then 4H volume ratio
 - Smart alert mode (`ALERT_ONLY_NEW`) to avoid repeated alerts
