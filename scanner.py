@@ -250,7 +250,6 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str, ml_bundle: dict | None 
 
     qualified = daily_ok and macd_ok and volume_ok and near_breakout_ok and adx_ok and rsi_ok and vol_up_ok and golden_cross_ok and ml_gate_ok
     price = None
-    ml_prob = ml_prob  # already computed above
     if qualified:
         ticker = with_retries(exchange.fetch_ticker, symbol)
         price = float(ticker.get("last") or daily_df["close"].iloc[-1])

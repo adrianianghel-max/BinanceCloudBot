@@ -102,9 +102,13 @@ def train_model(save: bool = True) -> Any | None:
     ])
 
     if len(y) >= 50:
-        cv = StratifiedKFold(n_splits=min(5, winners, len(y) - winners), shuffle=True, random_state=42)
-        scores = cross_val_score(pipeline, X, y, cv=cv, scoring="roc_auc")
-        logger.info("Cross-val ROC-AUC: %.3f ± %.3f", scores.mean(), scores.std())
+        n_splits = min(5, winners, len(y) - winners)
+        if n_splits >= 2:
+            cv = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
+            scores = cross_val_score(pipeline, X, y, cv=cv, scoring="roc_auc")
+            logger.info("Cross-val ROC-AUC: %.3f ± %.3f", scores.mean(), scores.std())
+        else:
+            logger.info("Skipping cross-validation: not enough samples per class.")
 
     pipeline.fit(X, y)
 
