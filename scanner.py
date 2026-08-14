@@ -8,6 +8,7 @@ import ccxt
 
 import config
 from indicators import (
+    add_4h_ema_columns,
     add_ema_columns,
     calculate_adx_value,
     calculate_distance_to_breakout_pct,
@@ -18,6 +19,7 @@ from indicators import (
     calculate_volume_ratio,
     is_daily_bullish,
     is_daily_early_trend,
+    is_golden_cross_ema9_21,
     prepare_ohlcv_df,
 )
 from state_manager import (
@@ -150,6 +152,7 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
 
     daily_df = add_ema_columns(prepare_ohlcv_df(daily_raw))
     h4_df = prepare_ohlcv_df(h4_raw)
+    h4_df = add_4h_ema_columns(h4_df)
     h1_df = prepare_ohlcv_df(h1_raw) if h1_raw else None
 
     daily_strict_ok = is_daily_bullish(daily_df)
@@ -178,6 +181,14 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
         and 0 <= distance_to_breakout <= config.NEAR_BREAKOUT_MAX_DISTANCE_PCT
     )
     adx_ok = adx_4h is not None and adx_4h >= config.ADX_MIN
+
+    golden_cross_ok = True
+    if config.USE_GOLDEN_CROSS_FILTER:
+        golden_cross_ok = is_golden_cross_ema9_21(
+            h4_df,
+            daily_df,
+            confirm_candles=config.GOLDEN_CROSS_CONFIRM_CANDLES,
+        )
 
     rsi_current = None
     rsi_ok = True
@@ -211,7 +222,7 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
             use_1h_filter=config.USE_1H_FILTER,
         )
 
-    qualified = daily_ok and macd_ok and volume_ok and near_breakout_ok and adx_ok and rsi_ok and vol_up_ok
+    qualified = daily_ok and macd_ok and volume_ok and near_breakout_ok and adx_ok and rsi_ok and vol_up_ok and golden_cross_ok
     price = None
     if qualified:
         ticker = with_retries(exchange.fetch_ticker, symbol)
@@ -237,6 +248,7 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
         "adx_ok": adx_ok,
         "near_breakout_ok": near_breakout_ok,
         "vol_up_ok": vol_up_ok,
+        "golden_cross_ok": golden_cross_ok,
         "qualified": qualified,
     }
 
@@ -309,6 +321,7 @@ def main() -> int:
         "AFTER_RSI_FILTER": 0,
         "AFTER_MACD_FILTER": 0,
         "AFTER_ADX_FILTER": 0,
+        "AFTER_GOLDEN_CROSS_FILTER": 0,
         "AFTER_BREAKOUT_FILTER": 0,
         "AFTER_SCORING_FILTER": 0,
         "FINAL_QUALIFIED": 0,
@@ -354,6 +367,10 @@ def main() -> int:
             if not diagnostic.get("adx_ok", False):
                 continue
             counters["AFTER_ADX_FILTER"] += 1
+
+            if not diagnostic.get("golden_cross_ok", True):
+                continue
+            counters["AFTER_GOLDEN_CROSS_FILTER"] += 1
 
             if not diagnostic.get("near_breakout_ok", False):
                 continue

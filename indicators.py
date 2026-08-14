@@ -17,7 +17,9 @@ def prepare_ohlcv_df(raw_ohlcv: list[list[float]]) -> pd.DataFrame:
 
 def add_ema_columns(df: pd.DataFrame) -> pd.DataFrame:
     out = df.copy()
+    out["ema9"] = ta.ema(out["close"], length=9)
     out["ema10"] = ta.ema(out["close"], length=10)
+    out["ema21"] = ta.ema(out["close"], length=21)
     out["ema50"] = ta.ema(out["close"], length=50)
     out["ema200"] = ta.ema(out["close"], length=200)
     return out
@@ -68,7 +70,72 @@ def is_daily_early_trend(df: pd.DataFrame, ema50_lookback: int = 5) -> bool:
     return all(bool(c) for c in conditions)
 
 
-def is_4h_breakout(df: pd.DataFrame, lookback: int = 20) -> bool:
+def add_4h_ema_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """Add EMA 9 and EMA 21 columns to a 4h dataframe."""
+    out = df.copy()
+    out["ema9"] = ta.ema(out["close"], length=9)
+    out["ema21"] = ta.ema(out["close"], length=21)
+    return out
+
+
+def is_golden_cross_ema9_21(
+    df_4h: pd.DataFrame,
+    df_daily: pd.DataFrame,
+    confirm_candles: int = 1,
+) -> bool:
+    """Return True when EMA 9 has just crossed above EMA 21 on the 4h timeframe
+    AND the daily trend is generally bullish (EMA 10 > EMA 50 or close > EMA 50).
+
+    A *fresh* golden cross is confirmed when:
+    - On the current (last) candle  : ema9 > ema21
+    - On the previous candle(s)     : ema9 <= ema21  (the actual crossover just happened)
+    - Daily bullish general trend   : ema10 > ema50 OR close > ema50
+    """
+    required_4h = max(confirm_candles + 2, 25)
+    if len(df_4h) < required_4h:
+        return False
+
+    ema9_now = df_4h["ema9"].iloc[-1]
+    ema21_now = df_4h["ema21"].iloc[-1]
+
+    if pd.isna(ema9_now) or pd.isna(ema21_now):
+        return False
+
+    # Current candle: EMA9 must be above EMA21
+    if not (ema9_now > ema21_now):
+        return False
+
+    # Previous `confirm_candles` candles: EMA9 must have been at or below EMA21
+    cross_confirmed = False
+    for i in range(1, confirm_candles + 2):
+        ema9_prev = df_4h["ema9"].iloc[-(i + 1)]
+        ema21_prev = df_4h["ema21"].iloc[-(i + 1)]
+        if pd.isna(ema9_prev) or pd.isna(ema21_prev):
+            return False
+        if ema9_prev <= ema21_prev:
+            cross_confirmed = True
+            break
+
+    if not cross_confirmed:
+        return False
+
+    # Daily general bullish trend guard
+    if len(df_daily) < 55:
+        return False
+
+    last_daily = df_daily.iloc[-1]
+    ema10_d = last_daily.get("ema10", float("nan"))
+    ema50_d = last_daily.get("ema50", float("nan"))
+    close_d = last_daily.get("close", float("nan"))
+
+    if pd.isna(ema10_d) or pd.isna(ema50_d) or pd.isna(close_d):
+        return False
+
+    bullish_trend = bool(ema10_d > ema50_d) or bool(close_d > ema50_d)
+    return bullish_trend
+
+
+
     if len(df) < lookback + 2:
         return False
 

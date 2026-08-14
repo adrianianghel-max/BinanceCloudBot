@@ -49,6 +49,10 @@ EMA_SLOPE_LOOKBACK = 10
 EMA_MID_SLOPE_LOOKBACK = 5
 MIN_EMA10_SLOPE_PCT = 0.05
 
+# Golden Cross EMA 9 / EMA 21
+USE_GOLDEN_CROSS_FILTER = True      # Activează filtrul Golden Cross EMA9 > EMA21 pe 4h
+GOLDEN_CROSS_CONFIRM_CANDLES = 1    # Câte lumânări anterioare confirmă crossover-ul
+
 # MACD Momentum
 MACD_FAST = 12
 MACD_SLOW = 26
