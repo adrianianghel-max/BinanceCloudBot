@@ -22,7 +22,7 @@ QUOTE_ASSET = "USDC"                    # Doar perechi USDC
 PRIMARY_QUOTE_ASSETS = ("USDC",)
 FALLBACK_QUOTE_ASSETS = ("USDC",)
 
-LEVERAGED_TOKENS = ("UP", "DOWN", "BULL", "BEAR")   # Excludere tokeni levered
+LEVERAGED_TOKENS = ("UP", "DOWN", "BULL", "BEAR")   # Exclude leveraged tokens
 STABLECOIN_BASES = (
     "USDC",
     "USDT",
@@ -34,7 +34,7 @@ STABLECOIN_BASES = (
     "EURC",
     "PYUSD",
     "USDD",
-)  # Excludere perechi stablecoin/stablecoin
+)  # Exclude stablecoin/stablecoin pairs
 
 # Proxy pentru acces Binance din cloud (ex: BINANCE_PROXY=http://user:pass@host:port)
 PROXY_URL = os.getenv("BINANCE_PROXY", "")
