@@ -33,6 +33,7 @@ logging.basicConfig(
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
 )
 logger = logging.getLogger("binance_usdc_scanner")
+STABLECOIN_BASES = {asset.upper() for asset in config.STABLECOIN_BASES}
 
 
 def build_exchange(exchange_id: str) -> ccxt.Exchange:
@@ -73,6 +74,10 @@ def is_leveraged_base(base_asset: str) -> bool:
     return any(upper.endswith(marker) for marker in config.LEVERAGED_TOKENS)
 
 
+def is_stablecoin_base(base_asset: str) -> bool:
+    return str(base_asset).upper() in STABLECOIN_BASES
+
+
 def get_quote_symbols(exchange: ccxt.Exchange, quote_assets: tuple[str, ...]) -> list[str]:
     markets = with_retries(exchange.load_markets)
     symbols = []
@@ -89,6 +94,8 @@ def get_quote_symbols(exchange: ccxt.Exchange, quote_assets: tuple[str, ...]) ->
 
         base = market.get("base", "")
         if is_leveraged_base(base):
+            continue
+        if is_stablecoin_base(base):
             continue
 
         symbols.append(symbol)

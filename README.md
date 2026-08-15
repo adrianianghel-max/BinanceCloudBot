@@ -6,6 +6,7 @@ Automated Binance Spot USDC scanner for GitHub Actions (Python 3.12), with Teleg
 
 - Scans all active Binance Spot symbols quoted in `USDC`
 - Excludes leveraged tokens ending with: `UP`, `DOWN`, `BULL`, `BEAR`
+- Excludes stablecoin bases (ex: `USDT`, `BUSD`, `FDUSD`, `TUSD`) to avoid stablecoin/stablecoin pairs
 - Daily filter:
   - `EMA10 > EMA50 > EMA200`
   - `Close > EMA10`
