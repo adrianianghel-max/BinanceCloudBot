@@ -438,9 +438,14 @@ def main() -> int:
     return 0
 
 
+SCAN_INTERVAL_SECONDS = 15 * 60  # 15 minute
+
 if __name__ == "__main__":
-    try:
-        raise SystemExit(main())
-    except Exception as exc:
-        logger.exception("Scanner failed: %s", exc)
-        raise SystemExit(1)
+    import time as _time
+    while True:
+        try:
+            main()
+        except Exception as exc:
+            logger.exception("Scanner failed: %s", exc)
+        logger.info("Urmatoarea scanare in %d minute...", SCAN_INTERVAL_SECONDS // 60)
+        _time.sleep(SCAN_INTERVAL_SECONDS)
