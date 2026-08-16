@@ -1,3 +1,4 @@
+"""state_manager.py — Alert state with signal-type change tracking."""
 from __future__ import annotations
 
 import json
@@ -6,7 +7,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -14,9 +14,7 @@ def load_json_state(path: str, default_value: dict[str, Any]) -> dict[str, Any]:
     file_path = Path(path)
     if not file_path.exists():
         return default_value
-
     try:
-        # utf-8-sig handles files saved with a UTF-8 BOM (common on Windows)
         with file_path.open("r", encoding="utf-8-sig") as f:
             data = json.load(f)
             if isinstance(data, dict):
@@ -36,13 +34,14 @@ def save_json_state(path: str, value: dict[str, Any]) -> None:
 
 
 def get_alert_state(path: str) -> dict[str, Any]:
-    default = {"top_symbols": [], "updated_at": None}
+    default: dict[str, Any] = {"top_symbols": [], "signal_states": {}, "updated_at": None}
     return load_json_state(path, default)
 
 
-def update_alert_state(path: str, symbols: list[str]) -> None:
+def update_alert_state(path: str, symbols: list[str], signal_states: dict[str, str] | None = None) -> None:
     payload = {
         "top_symbols": symbols,
+        "signal_states": signal_states or {},
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
     save_json_state(path, payload)
@@ -54,3 +53,13 @@ def should_send_only_new(current_symbols: list[str], previous_symbols: list[str]
     previous_set = set(previous_symbols)
     current_set = set(current_symbols)
     return len(current_set - previous_set) > 0
+
+
+def has_signal_state_changed(
+    symbol: str,
+    new_signal_type: str,
+    previous_signal_states: dict[str, str],
+) -> bool:
+    """Return True if this symbol's signal type changed (e.g. PRE_ENTRY → NEW_ENTRY)."""
+    prev = previous_signal_states.get(symbol)
+    return prev != new_signal_type
