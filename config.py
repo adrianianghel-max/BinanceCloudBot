@@ -1,6 +1,16 @@
 import os
 
 # ================================
+#   BASE DIRECTORY
+# ================================
+
+BASE_DIR = os.getenv("BOT_BASE_DIR", r"D:\crypto_scanner")
+
+def _p(filename: str) -> str:
+    """Return absolute path inside BASE_DIR."""
+    return os.path.join(BASE_DIR, filename)
+
+# ================================
 #   VERSION
 # ================================
 
@@ -142,7 +152,7 @@ ML_STRONG_ENTRY_PROBABILITY = 0.70
 ML_TARGET_GAIN_PCT = 8.0
 ML_HORIZON_4H_CANDLES = 12
 ML_STOP_LOSS_PCT = 3.0
-MODEL_PATH = "model.pkl"
+MODEL_PATH = _p("model.pkl")
 
 # ================================
 #   SCORING WEIGHTS (suma = 100)
@@ -184,7 +194,7 @@ TARGET_GAIN_PCT = 8.0
 # ================================
 
 PAPER_TRADING_ENABLED = True
-PAPER_TRADING_PATH = "paper_trades.json"
+PAPER_TRADING_PATH = _p("paper_trades.json")
 
 # ================================
 #   ALERT RANKING
@@ -216,9 +226,9 @@ TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 #   STATE FILES
 # ================================
 
-LAST_ALERTS_PATH = "last_alerts.json"
-CONFIG_STATE_PATH = "config_state.json"
-ENTRY_JOURNAL_PATH = "entry_journal.json"
+LAST_ALERTS_PATH = _p("last_alerts.json")
+CONFIG_STATE_PATH = _p("config_state.json")
+ENTRY_JOURNAL_PATH = _p("entry_journal.json")
 
 # ================================
 #   LEGACY COMPAT
