@@ -50,6 +50,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add last_alerts.json
-          git diff --cached --quiet || git commit -m "chore: update alert state"
+          git add last_alerts.json signals_history.json model.pkl || true
+          git diff --cached --quiet || git commit -m "chore: update alert state and signal history"
           git push
