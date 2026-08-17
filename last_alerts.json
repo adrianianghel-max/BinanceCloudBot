@@ -1,10 +1,10 @@
 ﻿{
   "top_symbols": [
+    "BTC/USDC",
     "XDC/USDC",
     "EURC/USDC",
-    "S/USDC",
-    "USDE/USDC",
-    "XMR/USDC"
+    "ETH/USDC",
+    "S/USDC"
   ],
-  "updated_at": "2026-08-17T02:37:04.387156+00:00"
+  "updated_at": "2026-08-17T03:35:29.315800+00:00"
 }
