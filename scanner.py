@@ -2,6 +2,7 @@
 
 import logging
 import time
+from datetime import datetime, timezone
 from typing import Any
 
 import ccxt
@@ -26,6 +27,7 @@ from state_manager import (
     update_alert_state,
 )
 from telegram_sender import send_telegram_message
+from trader import manage_trading, optimize_daily, setup_file_logging
 
 
 logging.basicConfig(
@@ -290,6 +292,9 @@ def print_top20_by_score(rows: list[dict[str, Any]]) -> None:
 
 
 def main() -> int:
+    now_utc = datetime.now(timezone.utc)
+    setup_file_logging()
+
     exchange, quote_assets = create_exchange()
 
     logger.info("Loading %s markets...", exchange.id)
@@ -299,6 +304,14 @@ def main() -> int:
 
     logger.info("TELEGRAM_TOKEN_PRESENT=%s", bool(config.TELEGRAM_TOKEN))
     logger.info("TELEGRAM_CHAT_ID_PRESENT=%s", bool(config.TELEGRAM_CHAT_ID))
+
+    # 📅 Recalibrare zilnică (backtest pe ziua anterioară + optimizare parametri).
+    # Rulează o singură dată pe zi și aplică parametrii prin optimizer pe config,
+    # astfel încât scanarea de azi folosește parametrii optimizați.
+    try:
+        optimize_daily(exchange, symbols, now_utc)
+    except Exception as exc:  # pylint: disable=broad-except
+        logger.exception("Recalibrare zilnică eșuată: %s", exc)
 
     counters = {
         "TOTAL_SYMBOLS": len(symbols),
@@ -384,6 +397,13 @@ def main() -> int:
 
     results.sort(key=lambda x: x["growth_score"] or 0.0, reverse=True)
     print_console_table(results[: config.CONSOLE_TOP_N])
+
+    # 💼 PAPER TRADING — gestionează pozițiile (TP/SL/trailing/EOD) și deschide
+    #    altele noi (max 2 simultan, 50 USDC fiecare). Numai simulare — fără ordine reale.
+    try:
+        manage_trading(exchange, score_pool, now_utc)
+    except Exception as exc:  # pylint: disable=broad-except
+        logger.exception("Trading cycle eșuat: %s", exc)
 
     # TOP 5 candidați după scorul de creștere (din score_pool, nu doar cei fully-qualified)
     top_for_telegram = sorted(

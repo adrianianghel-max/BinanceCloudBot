@@ -36,7 +36,7 @@ jobs:
         run: |
           echo "auto_scan_enabled=$(python -c "import json; print(str(json.load(open('config_state.json')).get('auto_scan_enabled', True)).lower())")" >> "$GITHUB_OUTPUT"
 
-      - name: 🔍 Run scanner
+      - name: 🔍 Run scanner (scan + paper trading + daily backtest)
         if: github.event_name != 'schedule' || steps.scan_state.outputs.auto_scan_enabled != 'false'
         shell: bash
         env:
@@ -44,12 +44,13 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python scanner.py
 
-      - name: 💾 Persist alert state
+      - name: 💾 Persist state (alerts, paper portfolio, params, history, reports)
         if: github.event_name != 'schedule' || steps.scan_state.outputs.auto_scan_enabled != 'false'
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add last_alerts.json
-          git diff --cached --quiet || git commit -m "chore: update alert state"
+          git add last_alerts.json config_state.json paper_state.json trading_state.json optimized_params.json strategy_history.json
+          git add reports/*.json 2>/dev/null || true
+          git diff --cached --quiet || git commit -m "chore: update bot state (alerts/paper/reports)"
           git push

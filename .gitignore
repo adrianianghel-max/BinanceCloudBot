@@ -1,2 +1,6 @@
 __pycache__/
 *.pyc
+trading.log
+_probe*.py
+_probe*.out
+_probe*.err
