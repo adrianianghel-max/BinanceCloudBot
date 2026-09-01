@@ -1,10 +1,10 @@
 ﻿{
   "top_symbols": [
-    "BCH/USDC",
     "VIRTUAL/USDC",
-    "CC/USDC",
     "BTC/USDC",
-    "LTC/USDC"
+    "BNB/USDC",
+    "DOT/USDC",
+    "SHIB/USDC"
   ],
-  "updated_at": "2026-08-31T21:57:30.256090+00:00"
+  "updated_at": "2026-09-01T01:01:10.404494+00:00"
 }
