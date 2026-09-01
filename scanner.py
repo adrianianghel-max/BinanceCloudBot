@@ -137,6 +137,7 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
         daily_raw = with_retries(exchange.fetch_ohlcv, symbol, "1d", limit=config.DAILY_LIMIT)
         h4_raw = with_retries(exchange.fetch_ohlcv, symbol, "4h", limit=config.H4_LIMIT)
         h1_raw = with_retries(exchange.fetch_ohlcv, symbol, "1h", limit=config.H1_LIMIT)
+        h15_raw = with_retries(exchange.fetch_ohlcv, symbol, "15m", limit=config.H15_LIMIT)
     except ccxt.BaseError as exc:
         logger.warning("Skipping %s after exchange error: %s", symbol, exc)
         return {
@@ -153,6 +154,8 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
     daily_df = add_ema_columns(prepare_ohlcv_df(daily_raw))
     h4_df = prepare_ohlcv_df(h4_raw)
     h1_df = prepare_ohlcv_df(h1_raw) if h1_raw else None
+    # Exclude the potentially open exchange candle to avoid acting on intrabar signals.
+    h15_df = add_ema_columns(prepare_ohlcv_df(h15_raw).iloc[:-1]) if h15_raw else None
 
     daily_strict_ok = is_daily_bullish(daily_df)
     if config.ALLOW_EARLY_TREND:
@@ -197,6 +200,29 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
         rsi_ok = False
         vol_up_ok = False
 
+    rsi_15m_current = None
+    h15_volume_ratio = None
+    h15_ok = True
+    if config.USE_15M_FILTER and h15_df is not None:
+        rsi_15m_current, rsi_15m_previous = calculate_rsi_pair(h15_df, period=config.RSI_PERIOD)
+        h15_volume_ratio = calculate_volume_ratio(h15_df, period=config.VOLUME_SMA_PERIOD)
+        h15_last = h15_df.iloc[-1] if len(h15_df) else None
+        h15_trend_ok = (
+            h15_last is not None
+            and h15_last["close"] > h15_last["ema10"] > h15_last["ema50"]
+        )
+        h15_ok = (
+            h15_trend_ok
+            and rsi_15m_current is not None
+            and rsi_15m_previous is not None
+            and config.RSI_15M_MIN <= rsi_15m_current <= config.RSI_15M_MAX
+            and rsi_15m_current > rsi_15m_previous
+            and h15_volume_ratio is not None
+            and h15_volume_ratio >= config.VOLUME_RATIO_15M_THRESHOLD
+        )
+    elif config.USE_15M_FILTER:
+        h15_ok = False
+
     score = None
     if (
         ema10_slope is not None
@@ -213,7 +239,10 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
             use_1h_filter=config.USE_1H_FILTER,
         )
 
-    qualified = daily_ok and macd_ok and volume_ok and near_breakout_ok and adx_ok and rsi_ok and vol_up_ok
+    qualified = (
+        daily_ok and macd_ok and volume_ok and near_breakout_ok and adx_ok
+        and rsi_ok and vol_up_ok and h15_ok
+    )
     price = None
     if qualified:
         ticker = with_retries(exchange.fetch_ticker, symbol)
@@ -228,6 +257,8 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
         "macd": f"{macd_line:.5f}/{signal_line:.5f}" if macd_line is not None and signal_line is not None else "N/A",
         "macd_spread_ratio": macd_spread_ratio,
         "rsi_1h": f"{rsi_current:.2f}" if rsi_current is not None else "N/A",
+        "rsi_15m": f"{rsi_15m_current:.2f}" if rsi_15m_current is not None else "N/A",
+        "vol15m": h15_volume_ratio,
         "dist_breakout_pct": distance_to_breakout,
         "adx_4h": adx_4h,
         "growth_score": score,
@@ -239,6 +270,7 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
         "adx_ok": adx_ok,
         "near_breakout_ok": near_breakout_ok,
         "vol_up_ok": vol_up_ok,
+        "h15_ok": h15_ok,
         "qualified": qualified,
     }
 
@@ -251,10 +283,10 @@ def print_console_table(rows: list[dict[str, Any]]) -> None:
         return
 
     header = (
-        "| Symbol | Price | RSI | MACD | EMA10 Slope | Vol Ratio | "
+        "| Symbol | Price | RSI 1H | RSI 15M | MACD | EMA10 Slope | Vol Ratio | "
         "Dist Breakout % | Growth Score |"
     )
-    separator = "|---|---:|---|---:|---:|---|---:|---:|"
+    separator = "|---|---:|---|---|---:|---:|---|---:|---:|"
 
     print(header)
     print(separator)
@@ -266,6 +298,7 @@ def print_console_table(rows: list[dict[str, Any]]) -> None:
         growth_score = _format_float(row.get("growth_score"), 2, "%")
         print(
             f"| {row.get('symbol', 'N/A')} | {price} | {row.get('rsi_1h', 'N/A')} | "
+            f"{row.get('rsi_15m', 'N/A')} | "
             f"{row.get('macd', 'N/A')} | {ema10_slope} | {vol4h} | "
             f"{dist_breakout} | {growth_score} |"
         )
@@ -276,7 +309,7 @@ def print_top20_by_score(rows: list[dict[str, Any]]) -> None:
         logger.info("No rows available for TOP 20 score diagnostic.")
         return
 
-    header = "Symbol | Score | RSI | EMA10 Slope | Volume Ratio | Distance To Breakout"
+    header = "Symbol | Score | RSI 1H | RSI 15M | EMA10 Slope | Volume Ratio | Distance To Breakout"
     separator = "-" * len(header)
     print(header)
     print(separator)
@@ -285,6 +318,7 @@ def print_top20_by_score(rows: list[dict[str, Any]]) -> None:
             f"{row.get('symbol', 'N/A')} | "
             f"{_format_float(row.get('growth_score'), 2)} | "
             f"{row.get('rsi_1h', 'N/A')} | "
+            f"{row.get('rsi_15m', 'N/A')} | "
             f"{_format_float(row.get('ema10_slope'), 3)} | "
             f"{_format_float(row.get('vol4h'), 2)} | "
             f"{_format_float(row.get('dist_breakout_pct'), 2)}"
@@ -377,6 +411,9 @@ def main() -> int:
             counters["AFTER_SCORING_FILTER"] += 1
 
             if not diagnostic.get("vol_up_ok", False):
+                continue
+
+            if not diagnostic.get("h15_ok", False):
                 continue
 
             if diagnostic.get("qualified", False):

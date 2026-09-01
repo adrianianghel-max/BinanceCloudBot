@@ -15,6 +15,8 @@ with Telegram alerts, daily backtest/recalibration ("smart trader") and daily re
 - 4H filter: `MACD line > Signal line`, volume spike, proximity to breakout (≤ 3%),
   `ADX ≥ 20`
 - 1H filter: `RSI(14) ∈ [55, 80]`, RSI rising, volume rising
+- 15M entry confirmation: only closed candles; price above `EMA10 > EMA50`,
+  rising `RSI(14) ∈ [52, 75]`, and volume at least its 20-candle average
 - Transparent growth score (0–100%) and Top-5 Telegram alerts (`ALERT_ONLY_NEW`)
 
 ### Trading PAPER (modulul `trader.py`)

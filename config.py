@@ -16,6 +16,7 @@ SETUP_SIGNATURE_VERSION = "1.0.0"
 # ================================
 
 USE_1H_FILTER = True            # Confirmare trend 1h (EMA + MACD + volum)
+USE_15M_FILTER = True           # Confirmare intrare pe ultima lumânare 15m închisă
 ALERT_ONLY_NEW = True           # Evită alerte duplicate
 ALLOW_EARLY_TREND = True        # Detectează trend timpuriu (~1h înainte de breakout)
 USE_4H_BREAKOUT_FILTER = True   # 🔥 Critic pentru detectarea exploziei cu ~1h înainte
@@ -97,6 +98,9 @@ MIN_MACD_SPREAD_RATIO = 0.01
 RSI_PERIOD = 14
 RSI_MIN = 55
 RSI_MAX = 80
+RSI_15M_MIN = 52
+RSI_15M_MAX = 75
+VOLUME_RATIO_15M_THRESHOLD = 1.0
 
 # StochRSI (14,14,3,3)
 STOCH_RSI_RSI_LENGTH = 14
