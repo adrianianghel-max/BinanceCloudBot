@@ -1,10 +1,10 @@
 ﻿{
   "top_symbols": [
+    "ALGO/USDC",
     "VIRTUAL/USDC",
-    "BTC/USDC",
-    "BNB/USDC",
-    "DOT/USDC",
-    "SHIB/USDC"
+    "SHIB/USDC",
+    "BERA/USDC",
+    "ADA/USDC"
   ],
-  "updated_at": "2026-09-01T01:01:10.404494+00:00"
+  "updated_at": "2026-09-01T06:03:28.168518+00:00"
 }
