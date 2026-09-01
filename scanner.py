@@ -286,7 +286,7 @@ def print_console_table(rows: list[dict[str, Any]]) -> None:
         "| Symbol | Price | RSI 1H | RSI 15M | MACD | EMA10 Slope | Vol Ratio | "
         "Dist Breakout % | Growth Score |"
     )
-    separator = "|---|---:|---|---|---:|---:|---|---:|---:|"
+    separator = "|---|---:|---:|---:|---:|---:|---|---:|---:|"
 
     print(header)
     print(separator)
