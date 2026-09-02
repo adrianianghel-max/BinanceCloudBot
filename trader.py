@@ -534,13 +534,13 @@ class Backtester:
             return False
         if feats["volume_ratio"] is None or feats["volume_ratio"] < params["VOLUME_RATIO_THRESHOLD"]:
             return False
-        if feats["distance"] is None or not (0 <= feats["distance"] <= params["NEAR_BREAKOUT_MAX_DISTANCE_PCT"]):
+        if feats["distance"] is None or not (
+            -config.BREAKOUT_ALLOW_OVERSHOOT_PCT <= feats["distance"] <= params["NEAR_BREAKOUT_MAX_DISTANCE_PCT"]
+        ):
             return False
         if feats["adx"] is None or feats["adx"] < params["ADX_MIN"]:
             return False
         if feats["rsi"] is None or not (params["RSI_MIN"] <= feats["rsi"] <= params["RSI_MAX"]):
-            return False
-        if not feats["rsi_rising"] or not feats["vol_up"]:
             return False
         return True
 

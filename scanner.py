@@ -177,25 +177,27 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
     volume_ok = volume_ratio is not None and volume_ratio >= config.VOLUME_RATIO_THRESHOLD
     near_breakout_ok = (
         distance_to_breakout is not None
-        and 0 <= distance_to_breakout <= config.NEAR_BREAKOUT_MAX_DISTANCE_PCT
+        and -config.BREAKOUT_ALLOW_OVERSHOOT_PCT <= distance_to_breakout <= config.NEAR_BREAKOUT_MAX_DISTANCE_PCT
     )
     adx_ok = adx_4h is not None and adx_4h >= config.ADX_MIN
 
     rsi_current = None
     rsi_ok = True
     vol_up_ok = True
+    rsi_rising_ok = True
     if config.USE_1H_FILTER and h1_df is not None:
         rsi_current, rsi_previous = calculate_rsi_pair(h1_df, period=config.RSI_PERIOD)
+        rsi_rising_ok = rsi_current is not None and rsi_previous is not None and rsi_current > rsi_previous
         rsi_ok = (
             rsi_current is not None
             and rsi_previous is not None
             and config.RSI_MIN <= rsi_current <= config.RSI_MAX
-            and rsi_current > rsi_previous
         )
         vol_up_ok = len(h1_df) >= 2 and h1_df["volume"].iloc[-1] > h1_df["volume"].iloc[-2]
     elif config.USE_1H_FILTER:
         rsi_ok = False
         vol_up_ok = False
+        rsi_rising_ok = False
 
     score = None
     if (
@@ -213,7 +215,7 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
             use_1h_filter=config.USE_1H_FILTER,
         )
 
-    qualified = daily_ok and macd_ok and volume_ok and near_breakout_ok and adx_ok and rsi_ok and vol_up_ok
+    qualified = daily_ok and macd_ok and volume_ok and near_breakout_ok and adx_ok and rsi_ok
     price = None
     if qualified:
         ticker = with_retries(exchange.fetch_ticker, symbol)
@@ -235,6 +237,7 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
         "ema_slope_ok": ema_slope_ok,
         "volume_ok": volume_ok,
         "rsi_ok": rsi_ok,
+        "rsi_rising_ok": rsi_rising_ok,
         "macd_ok": macd_ok,
         "adx_ok": adx_ok,
         "near_breakout_ok": near_breakout_ok,

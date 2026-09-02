@@ -85,7 +85,7 @@ EMA_MID = 50
 EMA_SLOW = 200
 EMA_SLOPE_LOOKBACK = 10
 EMA_MID_SLOPE_LOOKBACK = 5
-MIN_EMA10_SLOPE_PCT = 0.05
+MIN_EMA10_SLOPE_PCT = 0.0
 
 # MACD Momentum
 MACD_FAST = 12
@@ -93,10 +93,10 @@ MACD_SLOW = 26
 MACD_SIGNAL = 9
 MIN_MACD_SPREAD_RATIO = 0.01
 
-# RSI (pentru impuls sănătos)
+# RSI (pentru impuls sănătos — lărgit pentru profilul gainerilor 2026-09-02)
 RSI_PERIOD = 14
-RSI_MIN = 55
-RSI_MAX = 80
+RSI_MIN = 45
+RSI_MAX = 85
 
 # StochRSI (14,14,3,3)
 STOCH_RSI_RSI_LENGTH = 14
@@ -106,15 +106,16 @@ STOCH_RSI_D_SMOOTH = 3
 
 # Volum (confirmare presiune)
 VOLUME_SMA_PERIOD = 20
-VOLUME_RATIO_THRESHOLD = 1.2
+VOLUME_RATIO_THRESHOLD = 0.6
 
-# Breakout proximity
+# Breakout proximity — relaxat după profilul gainerilor 2026-09-02 (med 12.5%)
 BREAKOUT_LOOKBACK_4H = 20
-NEAR_BREAKOUT_MAX_DISTANCE_PCT = 3.0
+NEAR_BREAKOUT_MAX_DISTANCE_PCT = 15.0
+BREAKOUT_ALLOW_OVERSHOOT_PCT = 5.0   # acceptă preț deja peste max (breakout fresh)
 
-# ADX (trend valid)
+# ADX (trend valid — relaxat, p25 gaineri = 21.8)
 ADX_PERIOD = 14
-ADX_MIN = 20.0
+ADX_MIN = 12.0
 
 # Bollinger (pre-breakout / squeeze)
 BOLLINGER_LENGTH = 20
@@ -220,11 +221,11 @@ BACKTEST_1H_LIMIT = 400                 # lumânări 1h descărcate pentru simul
 
 # Grid de căutare (variații față de valorile curente din config)
 SEARCH_RANGES = {
-    "NEAR_BREAKOUT_MAX_DISTANCE_PCT": [1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0],
-    "VOLUME_RATIO_THRESHOLD": [1.0, 1.2, 1.4, 1.6, 1.8, 2.0],
-    "MIN_EMA10_SLOPE_PCT": [0.0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30],
-    "RSI_COMBOS": [(50, 70), (55, 75), (55, 80), (60, 85)],
-    "ADX_MIN": [15.0, 20.0, 25.0, 30.0],
+    "NEAR_BREAKOUT_MAX_DISTANCE_PCT": [3.0, 5.0, 8.0, 12.0, 15.0, 20.0],
+    "VOLUME_RATIO_THRESHOLD": [0.4, 0.6, 0.8, 1.0, 1.2, 1.5],
+    "MIN_EMA10_SLOPE_PCT": [0.0, 0.05, 0.10, 0.20],
+    "RSI_COMBOS": [(45, 85), (50, 80), (50, 85), (55, 85), (55, 75)],
+    "ADX_MIN": [10.0, 12.0, 15.0, 20.0, 25.0, 30.0],
 }
 
 # Optimizer
