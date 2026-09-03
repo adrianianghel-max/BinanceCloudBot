@@ -1,10 +1,10 @@
 ﻿{
   "top_symbols": [
-    "ALGO/USDC",
-    "FARTCOIN/USDC",
+    "ETH/USDC",
+    "XRP/USDC",
     "LTC/USDC",
-    "CRO/USDC",
-    "MANA/USDC"
+    "ALGO/USDC",
+    "CRO/USDC"
   ],
-  "updated_at": "2026-09-03T21:15:19.989047+00:00"
+  "updated_at": "2026-09-03T23:20:23.002408+00:00"
 }
