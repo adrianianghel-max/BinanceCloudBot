@@ -1,5 +1,38 @@
 ﻿{
-  "positions": {},
+  "positions": {
+    "LTC/USDC": {
+      "symbol": "LTC/USDC",
+      "entry_price": 50.116,
+      "size_usdc": 50.0,
+      "quantity": 0.9976853699417352,
+      "entry_time": "2026-09-03T06:05:04.335820+00:00",
+      "peak_price": 50.116,
+      "trailing_armed": false,
+      "trailing_stop": 0.0,
+      "tp_pct": 0.15,
+      "sl_pct": 0.08,
+      "status": "open",
+      "exit_price": null,
+      "exit_time": null,
+      "exit_reason": null
+    },
+    "XRP/USDC": {
+      "symbol": "XRP/USDC",
+      "entry_price": 1.36587,
+      "size_usdc": 50.0,
+      "quantity": 36.606704884066566,
+      "entry_time": "2026-09-03T06:05:04.335820+00:00",
+      "peak_price": 1.36587,
+      "trailing_armed": false,
+      "trailing_stop": 0.0,
+      "tp_pct": 0.15,
+      "sl_pct": 0.08,
+      "status": "open",
+      "exit_price": null,
+      "exit_time": null,
+      "exit_reason": null
+    }
+  },
   "closed_trades": [],
   "last_close_by_symbol": {},
   "pause_entries_until": null
