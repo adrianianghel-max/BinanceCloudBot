@@ -1,10 +1,10 @@
 ﻿{
   "top_symbols": [
-    "CRO/USDC",
     "PEAQ/USDC",
-    "MANA/USDC",
-    "BNB/USDC",
-    "ETH/USDC"
+    "ETH/USDC",
+    "S/USDC",
+    "USD1/USDC",
+    "XMR/USDC"
   ],
-  "updated_at": "2026-09-04T05:55:48.236996+00:00"
+  "updated_at": "2026-09-04T10:27:13.468491+00:00"
 }
