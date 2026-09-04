@@ -16,15 +16,15 @@
       "exit_time": null,
       "exit_reason": null
     },
-    "XRP/USDC": {
-      "symbol": "XRP/USDC",
-      "entry_price": 1.36587,
+    "PEAQ/USDC": {
+      "symbol": "PEAQ/USDC",
+      "entry_price": 0.02619,
       "size_usdc": 50.0,
-      "quantity": 36.606704884066566,
-      "entry_time": "2026-09-03T06:05:04.335820+00:00",
-      "peak_price": 1.47407,
-      "trailing_armed": true,
-      "trailing_stop": 1.4298479,
+      "quantity": 1909.1256204658266,
+      "entry_time": "2026-09-04T14:27:30.580373+00:00",
+      "peak_price": 0.02619,
+      "trailing_armed": false,
+      "trailing_stop": 0.0,
       "tp_pct": 0.15,
       "sl_pct": 0.08,
       "status": "open",
@@ -33,7 +33,25 @@
       "exit_reason": null
     }
   },
-  "closed_trades": [],
-  "last_close_by_symbol": {},
+  "closed_trades": [
+    {
+      "symbol": "XRP/USDC",
+      "entry_price": 1.36587,
+      "exit_price": 1.40302,
+      "quantity": 36.606704884066566,
+      "amount_usdc": 50.0,
+      "gross_pnl": 1.3599390864430703,
+      "buy_fee": 0.05,
+      "sell_fee": 0.05135993908644307,
+      "total_fees": 0.10135993908644307,
+      "net_pnl": 1.2585791473566272,
+      "exit_reason": "trailing_stop",
+      "entry_time": "2026-09-03T06:05:04.335820+00:00",
+      "exit_time": "2026-09-04T14:27:30.580373+00:00"
+    }
+  ],
+  "last_close_by_symbol": {
+    "XRP/USDC": "2026-09-04T14:27:30.580373+00:00"
+  },
   "pause_entries_until": null
 }
