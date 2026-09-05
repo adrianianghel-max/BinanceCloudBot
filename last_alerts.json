@@ -1,10 +1,10 @@
 ﻿{
   "top_symbols": [
-    "LINK/USDC",
-    "BNB/USDC",
-    "VET/USDC",
     "PEAQ/USDC",
-    "AVAX/USDC"
+    "VET/USDC",
+    "DOT/USDC",
+    "BNB/USDC",
+    "S/USDC"
   ],
-  "updated_at": "2026-09-04T22:04:54.188683+00:00"
+  "updated_at": "2026-09-05T00:07:39.094995+00:00"
 }
