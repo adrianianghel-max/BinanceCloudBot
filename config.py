@@ -117,9 +117,9 @@ BREAKOUT_ALLOW_OVERSHOOT_PCT = 5.0   # acceptă preț deja peste max (breakout f
 ADX_PERIOD = 14
 ADX_MIN = 12.0
 
-# Explosive momentum: enter only when the latest closed 1h candle or 4h
-# candle confirms a gainer move of at least this size.
-EXPLOSIVE_MOMENTUM_MIN_PCT = 8.0
+# Forward opportunity: enter before the move when ATR-based analysis
+# estimates at least this much remaining upside.
+FORECAST_UPSIDE_MIN_PCT = 8.0
 
 # Bollinger (pre-breakout / squeeze)
 BOLLINGER_LENGTH = 20

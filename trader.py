@@ -1067,6 +1067,8 @@ def generate_daily_report(
                 "momentum_score": d.get("momentum_score"),
                 "momentum_1h_pct": d.get("momentum_1h_pct"),
                 "momentum_4h_pct": d.get("momentum_4h_pct"),
+                "forecast_upside_pct": d.get("forecast_upside_pct"),
+                "forecast_confidence": d.get("forecast_confidence"),
                 "dist_breakout_pct": d.get("dist_breakout_pct"),
             }
             for d in top5

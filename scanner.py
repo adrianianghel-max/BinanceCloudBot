@@ -16,6 +16,7 @@ from indicators import (
     calculate_growth_score,
     calculate_macd_values,
     calculate_recent_change_pct,
+    calculate_remaining_potential,
     calculate_rsi_pair,
     calculate_volume_ratio,
     is_daily_bullish,
@@ -170,9 +171,22 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
     adx_4h = calculate_adx_value(h4_df, period=config.ADX_PERIOD)
     momentum_1h_pct = calculate_recent_change_pct(h1_df) if h1_df is not None else None
     momentum_4h_pct = calculate_recent_change_pct(h4_df)
-    momentum_ok = (
-        (momentum_1h_pct is not None and momentum_1h_pct >= config.EXPLOSIVE_MOMENTUM_MIN_PCT)
-        or (momentum_4h_pct is not None and momentum_4h_pct >= config.EXPLOSIVE_MOMENTUM_MIN_PCT)
+    potential = calculate_remaining_potential(
+        h4_df,
+        atr_period=config.REMAINING_POTENTIAL_ATR_PERIOD,
+        lookback=config.PRICE_ACC_LOOKBACK,
+    )
+    forecast_upside_pct = potential.get("high")
+    early_momentum_ok = (
+        (momentum_1h_pct is not None and momentum_1h_pct > 0.0)
+        or (momentum_4h_pct is not None and momentum_4h_pct > 0.0)
+    )
+    forecast_ok = (
+        forecast_upside_pct is not None
+        and forecast_upside_pct >= config.FORECAST_UPSIDE_MIN_PCT
+        and potential.get("confidence") is not None
+        and potential["confidence"] >= 50.0
+        and early_momentum_ok
     )
 
     macd_spread_ratio = None
@@ -225,11 +239,12 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
         strongest_momentum = max(momentum_1h_pct or 0.0, momentum_4h_pct or 0.0)
         momentum_score = min(max(strongest_momentum / 15.0, 0.0), 1.0) * 100.0
         # Give explosive moves priority while retaining the structural score.
-        score = round(score * 0.7 + momentum_score * 0.3, 2)
+        forecast_score = min(max((forecast_upside_pct or 0.0) / 15.0, 0.0), 1.0) * 100.0
+        score = round(score * 0.55 + momentum_score * 0.15 + forecast_score * 0.30, 2)
 
     qualified = (
         daily_ok and macd_ok and volume_ok and near_breakout_ok and adx_ok
-        and rsi_ok and momentum_ok
+        and rsi_ok and forecast_ok
     )
     price = None
     if qualified:
@@ -249,7 +264,9 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
         "adx_4h": adx_4h,
         "momentum_1h_pct": momentum_1h_pct,
         "momentum_4h_pct": momentum_4h_pct,
-        "momentum_ok": momentum_ok,
+        "forecast_upside_pct": forecast_upside_pct,
+        "forecast_confidence": potential.get("confidence"),
+        "forecast_ok": forecast_ok,
         "growth_score": score,
         "momentum_score": momentum_score,
         "daily_ok": daily_ok,
