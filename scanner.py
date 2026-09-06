@@ -15,6 +15,7 @@ from indicators import (
     calculate_ema10_slope_pct,
     calculate_growth_score,
     calculate_macd_values,
+    calculate_recent_change_pct,
     calculate_rsi_pair,
     calculate_volume_ratio,
     is_daily_bullish,
@@ -167,6 +168,12 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
     volume_ratio = calculate_volume_ratio(h4_df, period=config.VOLUME_SMA_PERIOD)
     distance_to_breakout = calculate_distance_to_breakout_pct(h4_df, lookback=config.BREAKOUT_LOOKBACK_4H)
     adx_4h = calculate_adx_value(h4_df, period=config.ADX_PERIOD)
+    momentum_1h_pct = calculate_recent_change_pct(h1_df) if h1_df is not None else None
+    momentum_4h_pct = calculate_recent_change_pct(h4_df)
+    momentum_ok = (
+        (momentum_1h_pct is not None and momentum_1h_pct >= config.EXPLOSIVE_MOMENTUM_MIN_PCT)
+        or (momentum_4h_pct is not None and momentum_4h_pct >= config.EXPLOSIVE_MOMENTUM_MIN_PCT)
+    )
 
     macd_spread_ratio = None
     macd_ok = False
@@ -200,6 +207,7 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
         rsi_rising_ok = False
 
     score = None
+    momentum_score = None
     if (
         ema10_slope is not None
         and macd_spread_ratio is not None
@@ -214,8 +222,15 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
             rsi_value=rsi_current,
             use_1h_filter=config.USE_1H_FILTER,
         )
+        strongest_momentum = max(momentum_1h_pct or 0.0, momentum_4h_pct or 0.0)
+        momentum_score = min(max(strongest_momentum / 15.0, 0.0), 1.0) * 100.0
+        # Give explosive moves priority while retaining the structural score.
+        score = round(score * 0.7 + momentum_score * 0.3, 2)
 
-    qualified = daily_ok and macd_ok and volume_ok and near_breakout_ok and adx_ok and rsi_ok
+    qualified = (
+        daily_ok and macd_ok and volume_ok and near_breakout_ok and adx_ok
+        and rsi_ok and momentum_ok
+    )
     price = None
     if qualified:
         ticker = with_retries(exchange.fetch_ticker, symbol)
@@ -232,7 +247,11 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
         "rsi_1h": f"{rsi_current:.2f}" if rsi_current is not None else "N/A",
         "dist_breakout_pct": distance_to_breakout,
         "adx_4h": adx_4h,
+        "momentum_1h_pct": momentum_1h_pct,
+        "momentum_4h_pct": momentum_4h_pct,
+        "momentum_ok": momentum_ok,
         "growth_score": score,
+        "momentum_score": momentum_score,
         "daily_ok": daily_ok,
         "ema_slope_ok": ema_slope_ok,
         "volume_ok": volume_ok,

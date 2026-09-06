@@ -23,7 +23,9 @@ with Telegram alerts, daily backtest/recalibration ("smart trader") and daily re
 - **Take-profit +15%**, **Stop-loss −8%**, **trailing stop** (armat la +5%, pas 3%,
   niciodată sub breakeven), **închidere forțată la 23:59 UTC**
 - **Comision 0.1% per tranzacție (buy & sell)** → profit net raportat
-- Cooldown 48h per simbol, protecție la drawdown (pauză intrări), cooldown rotire
+- Selecție agresivă: intră doar la momentum de minimum 8% pe ultima lumânare 1h
+  sau 4h; mișcarea rapidă are pondere în scor
+- Maximum 3 poziții, re-entry după 6h și time-stop după 8h dacă impulsul nu continuă
 - Stare persistată în `paper_state.json` (supraviețuiește între rulări GitHub Actions)
 
 ### Backtest zilnic + recalibrare ("smart trader")

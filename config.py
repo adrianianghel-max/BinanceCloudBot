@@ -117,6 +117,10 @@ BREAKOUT_ALLOW_OVERSHOOT_PCT = 5.0   # acceptă preț deja peste max (breakout f
 ADX_PERIOD = 14
 ADX_MIN = 12.0
 
+# Explosive momentum: enter only when the latest closed 1h candle or 4h
+# candle confirms a gainer move of at least this size.
+EXPLOSIVE_MOMENTUM_MIN_PCT = 8.0
+
 # Bollinger (pre-breakout / squeeze)
 BOLLINGER_LENGTH = 20
 BOLLINGER_STD = 2.0
@@ -167,7 +171,7 @@ REMAINING_POTENTIAL_ATR_MULT_HIGH = 3.0
 #   TRADING PARAMETERS
 # ================================
 
-MAX_POSITIONS = 2              # Maximum 2 poziții simultane
+MAX_POSITIONS = 3              # Maximum 3 poziții simultane
 POSITION_SIZE_USDC = 50.0       # 50 USDC per poziție
 TOTAL_CAPITAL_USDC = 100.0      # 2 × 50 USDC
 
@@ -186,8 +190,9 @@ ENTRY_CUTOFF_AT = "22:00"       # nu mai deschidem poziții noi după această o
 FEE_RATE = 0.001
 
 # Cooldown
-COOLDOWN_HOURS = 48             # Cooldown per simbol după SELL
-MIN_TIME_BETWEEN_ROTATIONS_HOURS = 12   # Rotație
+COOLDOWN_HOURS = 6              # Re-entry rapid după SELL
+MIN_TIME_BETWEEN_ROTATIONS_HOURS = 4     # Rotație rapidă
+MAX_HOLD_HOURS = 8               # Ieșire dacă impulsul nu continuă
 
 # Max drawdown protection
 MAX_DRAWDOWN_PCT = 0.20         # 80% din capital → pauză 24h

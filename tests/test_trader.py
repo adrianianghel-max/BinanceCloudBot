@@ -57,6 +57,9 @@ class TestPosition(unittest.TestCase):
     def test_hold_between(self):
         self.assertIsNone(self.pos.evaluate(104.0))
 
+    def test_time_stop_configuration_is_short(self):
+        self.assertLessEqual(config.MAX_HOLD_HOURS, 8)
+
     def test_trailing_stop_armed_then_triggered(self):
         # +6% => trailing armat (breakeven sau 3% sub peak)
         self.assertIsNone(self.pos.evaluate(106.0))
