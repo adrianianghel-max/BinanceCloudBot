@@ -1,10 +1,10 @@
 ﻿{
   "top_symbols": [
-    "SOL/USDC",
     "BERA/USDC",
+    "XTZ/USDC",
+    "LINK/USDC",
     "MANA/USDC",
-    "APXUSD/USDC",
-    "LINK/USDC"
+    "VET/USDC"
   ],
-  "updated_at": "2026-09-06T18:00:37.882330+00:00"
+  "updated_at": "2026-09-06T20:06:27.026778+00:00"
 }
