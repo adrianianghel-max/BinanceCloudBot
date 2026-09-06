@@ -93,15 +93,17 @@ class TestPortfolio(unittest.TestCase):
         portfolio = Portfolio()
         portfolio.open_position("A/USDC", 1.0, self.now)
         portfolio.open_position("B/USDC", 1.0, self.now)
+        portfolio.open_position("C/USDC", 1.0, self.now)
         self.assertFalse(portfolio.can_open())
         with self.assertRaises(RuntimeError):
-            portfolio.open_position("C/USDC", 1.0, self.now)
+            portfolio.open_position("D/USDC", 1.0, self.now)
 
     def test_cooldown(self):
         portfolio = Portfolio()
         portfolio.open_position("A/USDC", 1.0, self.now)
         portfolio.close_position("A/USDC", 1.1, "take_profit", self.now)
-        self.assertTrue(portfolio.in_cooldown("A/USDC", self.now + timedelta(hours=12)))
+        self.assertTrue(portfolio.in_cooldown(
+            "A/USDC", self.now + timedelta(hours=max(config.COOLDOWN_HOURS / 2, 1))))
         self.assertFalse(portfolio.in_cooldown(
             "A/USDC", self.now + timedelta(hours=config.COOLDOWN_HOURS + 1)))
 
