@@ -497,6 +497,17 @@ def calculate_overextension(df: pd.DataFrame, lookback: int = 20) -> Optional[fl
     return float((current_price - recent_high) / recent_high * 100.0)
 
 
+def calculate_recent_change_pct(df: pd.DataFrame, candles: int = 1) -> Optional[float]:
+    """Return the close-to-close percentage move over the latest candles."""
+    if candles < 1 or len(df) <= candles:
+        return None
+    start = float(df["close"].iloc[-candles - 1])
+    end = float(df["close"].iloc[-1])
+    if start <= 0:
+        return None
+    return (end - start) / start * 100.0
+
+
 def calculate_growth_score(
     ema10_slope_pct: float,
     macd_spread_ratio: float,

@@ -25,6 +25,7 @@ from indicators import (
     calculate_obv,
     calculate_obv_rising,
     calculate_overextension,
+    calculate_recent_change_pct,
     calculate_price_acceleration,
     calculate_remaining_potential,
     calculate_rsi_pair,
@@ -324,6 +325,11 @@ class TestGrowthScore(unittest.TestCase):
             use_1h_filter=True,
         )
         self.assertAlmostEqual(score, 100.0, places=2)
+
+    def test_recent_change_pct(self):
+        df = pd.DataFrame({"close": [100.0, 108.0, 120.0]})
+        self.assertAlmostEqual(calculate_recent_change_pct(df), 11.111111, places=5)
+        self.assertIsNone(calculate_recent_change_pct(df, candles=3))
 
 
 if __name__ == "__main__":

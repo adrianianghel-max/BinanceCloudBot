@@ -57,6 +57,9 @@ class TestPosition(unittest.TestCase):
     def test_hold_between(self):
         self.assertIsNone(self.pos.evaluate(104.0))
 
+    def test_time_stop_configuration_is_short(self):
+        self.assertLessEqual(config.MAX_HOLD_HOURS, 8)
+
     def test_trailing_stop_armed_then_triggered(self):
         # +6% => trailing armat (breakeven sau 3% sub peak)
         self.assertIsNone(self.pos.evaluate(106.0))
@@ -90,15 +93,17 @@ class TestPortfolio(unittest.TestCase):
         portfolio = Portfolio()
         portfolio.open_position("A/USDC", 1.0, self.now)
         portfolio.open_position("B/USDC", 1.0, self.now)
+        portfolio.open_position("C/USDC", 1.0, self.now)
         self.assertFalse(portfolio.can_open())
         with self.assertRaises(RuntimeError):
-            portfolio.open_position("C/USDC", 1.0, self.now)
+            portfolio.open_position("D/USDC", 1.0, self.now)
 
     def test_cooldown(self):
         portfolio = Portfolio()
         portfolio.open_position("A/USDC", 1.0, self.now)
         portfolio.close_position("A/USDC", 1.1, "take_profit", self.now)
-        self.assertTrue(portfolio.in_cooldown("A/USDC", self.now + timedelta(hours=12)))
+        self.assertTrue(portfolio.in_cooldown(
+            "A/USDC", self.now + timedelta(hours=max(config.COOLDOWN_HOURS / 2, 1))))
         self.assertFalse(portfolio.in_cooldown(
             "A/USDC", self.now + timedelta(hours=config.COOLDOWN_HOURS + 1)))
 

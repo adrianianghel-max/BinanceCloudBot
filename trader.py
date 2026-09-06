@@ -937,6 +937,10 @@ def manage_trading(exchange, score_pool: list[dict], now: datetime) -> dict[str,
             reason = "eod_force_close"
         else:
             reason = portfolio.positions[symbol].evaluate(price)
+            if reason is None:
+                held_for = now - portfolio.positions[symbol].entry_time
+                if held_for >= timedelta(hours=config.MAX_HOLD_HOURS):
+                    reason = "time_stop"
         if reason:
             trade = portfolio.close_position(symbol, price, reason, now)
             summary["closed"] += 1
@@ -1060,6 +1064,11 @@ def generate_daily_report(
                 "growth_score": d.get("growth_score"),
                 "rsi_1h": d.get("rsi_1h"),
                 "vol4h": d.get("vol4h"),
+                "momentum_score": d.get("momentum_score"),
+                "momentum_1h_pct": d.get("momentum_1h_pct"),
+                "momentum_4h_pct": d.get("momentum_4h_pct"),
+                "forecast_upside_pct": d.get("forecast_upside_pct"),
+                "forecast_confidence": d.get("forecast_confidence"),
                 "dist_breakout_pct": d.get("dist_breakout_pct"),
             }
             for d in top5
