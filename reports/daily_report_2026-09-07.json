@@ -1,0 +1,115 @@
+﻿{
+  "date": "2026-09-07",
+  "generated_at": "2026-09-07T13:37:25.166142+00:00",
+  "net_profit_usdc": 7.5217,
+  "net_profit_pct": 7.5217,
+  "total_fees_usdc": 0.1076,
+  "trades": [
+    {
+      "symbol": "LTC/USDC",
+      "entry_price": 50.116,
+      "exit_price": 57.763,
+      "quantity": 0.9976853699417352,
+      "amount_usdc": 50.0,
+      "gross_pnl": 7.629300023944445,
+      "buy_fee": 0.05,
+      "sell_fee": 0.057629300023944445,
+      "total_fees": 0.10762930002394444,
+      "net_pnl": 7.521670723920501,
+      "exit_reason": "take_profit",
+      "entry_time": "2026-09-03T06:05:04.335820+00:00",
+      "exit_time": "2026-09-07T13:37:25.166142+00:00"
+    }
+  ],
+  "params_used": {
+    "TP_PCT": 0.15,
+    "SL_PCT": 0.08,
+    "TRAILING_ARM_PCT": 0.05,
+    "TRAILING_STEP_PCT": 0.03,
+    "FEE_RATE": 0.001,
+    "NEAR_BREAKOUT_MAX_DISTANCE_PCT": 8.0,
+    "VOLUME_RATIO_THRESHOLD": 1.5,
+    "MIN_EMA10_SLOPE_PCT": 0.2,
+    "RSI_MIN": 50.0,
+    "RSI_MAX": 80.0,
+    "ADX_MIN": 20.0
+  },
+  "last_7d": {
+    "dates": [
+      "2026-08-31",
+      "2026-09-01",
+      "2026-09-02",
+      "2026-09-03",
+      "2026-09-04",
+      "2026-09-05",
+      "2026-09-06"
+    ],
+    "pnl_list": [
+      0.0,
+      0.0,
+      2.4525,
+      1.769,
+      0.0,
+      4.6707,
+      2.0792
+    ],
+    "total_profit": 10.9714,
+    "avg_daily": 1.5673,
+    "std_daily": 1.6074
+  },
+  "top5_ranking": [
+    {
+      "symbol": "MELANIA/USDC",
+      "growth_score": 100.0,
+      "rsi_1h": "72.50",
+      "vol4h": 2.124854795352563,
+      "dist_breakout_pct": 0.0
+    },
+    {
+      "symbol": "ATOM/USDC",
+      "growth_score": 89.92,
+      "rsi_1h": "69.92",
+      "vol4h": 2.4217957527715797,
+      "dist_breakout_pct": 1.77123986790754
+    },
+    {
+      "symbol": "LTC/USDC",
+      "growth_score": 81.58,
+      "rsi_1h": "66.19",
+      "vol4h": 3.273186510173986,
+      "dist_breakout_pct": 3.1113271754983014
+    },
+    {
+      "symbol": "PEAQ/USDC",
+      "growth_score": 81.02,
+      "rsi_1h": "65.23",
+      "vol4h": 2.1750116818324714,
+      "dist_breakout_pct": 7.665864558267444
+    },
+    {
+      "symbol": "AVAX/USDC",
+      "growth_score": 71.31,
+      "rsi_1h": "69.09",
+      "vol4h": 0.4988718869125185,
+      "dist_breakout_pct": 0.3961376578360984
+    }
+  ],
+  "open_positions_end": {
+    "PEAQ/USDC": {
+      "symbol": "PEAQ/USDC",
+      "entry_price": 0.02619,
+      "size_usdc": 50.0,
+      "quantity": 1909.1256204658266,
+      "entry_time": "2026-09-04T14:27:30.580373+00:00",
+      "peak_price": 0.02909,
+      "trailing_armed": true,
+      "trailing_stop": 0.0282173,
+      "tp_pct": 0.15,
+      "sl_pct": 0.08,
+      "status": "open",
+      "exit_price": null,
+      "exit_time": null,
+      "exit_reason": null
+    }
+  }
+}
