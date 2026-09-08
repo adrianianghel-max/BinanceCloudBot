@@ -1,21 +1,6 @@
 ﻿{
   "entries": [
     {
-      "date": "2026-08-31",
-      "params": {
-        "NEAR_BREAKOUT_MAX_DISTANCE_PCT": 5.0,
-        "VOLUME_RATIO_THRESHOLD": 1.6,
-        "MIN_EMA10_SLOPE_PCT": 0.3,
-        "RSI_MIN": 60.0,
-        "RSI_MAX": 85.0,
-        "ADX_MIN": 30.0
-      },
-      "pnl_net": 0.0,
-      "profit_factor": 0.0,
-      "max_drawdown_usdc": 0.0,
-      "trades": []
-    },
-    {
       "date": "2026-09-01",
       "params": {
         "NEAR_BREAKOUT_MAX_DISTANCE_PCT": 3.0,
@@ -114,6 +99,23 @@
       "max_drawdown_usdc": -1.1603914837673015,
       "trades": [
         "LTC/USDC",
+        "DOT/USDC"
+      ]
+    },
+    {
+      "date": "2026-09-07",
+      "params": {
+        "NEAR_BREAKOUT_MAX_DISTANCE_PCT": 20.0,
+        "VOLUME_RATIO_THRESHOLD": 0.4,
+        "MIN_EMA10_SLOPE_PCT": 0.2,
+        "RSI_MIN": 45.0,
+        "RSI_MAX": 85.0,
+        "ADX_MIN": 30.0
+      },
+      "pnl_net": 0.8394359787277501,
+      "profit_factor": 99.0,
+      "max_drawdown_usdc": 0.0,
+      "trades": [
         "DOT/USDC"
       ]
     }

@@ -1,10 +1,10 @@
 ﻿{
   "top_symbols": [
-    "APE/USDC",
     "ALGO/USDC",
-    "AVAX/USDC",
-    "PEAQ/USDC",
-    "S/USDC"
+    "XDC/USDC",
+    "VET/USDC",
+    "APE/USDC",
+    "VIRTUAL/USDC"
   ],
-  "updated_at": "2026-09-07T23:48:50.830634+00:00"
+  "updated_at": "2026-09-08T02:43:05.381169+00:00"
 }
