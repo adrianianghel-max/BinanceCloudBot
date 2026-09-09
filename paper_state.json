@@ -1,21 +1,5 @@
 ﻿{
   "positions": {
-    "ATOM/USDC": {
-      "symbol": "ATOM/USDC",
-      "entry_price": 1.6655,
-      "size_usdc": 50.0,
-      "quantity": 30.02101471029721,
-      "entry_time": "2026-09-07T13:37:25.166142+00:00",
-      "peak_price": 1.876,
-      "trailing_armed": true,
-      "trailing_stop": 1.8197199999999998,
-      "tp_pct": 0.15,
-      "sl_pct": 0.08,
-      "status": "open",
-      "exit_price": null,
-      "exit_time": null,
-      "exit_reason": null
-    },
     "XDC/USDC": {
       "symbol": "XDC/USDC",
       "entry_price": 0.02963,
@@ -23,6 +7,22 @@
       "quantity": 1687.4789065136686,
       "entry_time": "2026-09-08T02:38:26.603444+00:00",
       "peak_price": 0.02963,
+      "trailing_armed": false,
+      "trailing_stop": 0.0,
+      "tp_pct": 0.15,
+      "sl_pct": 0.08,
+      "status": "open",
+      "exit_price": null,
+      "exit_time": null,
+      "exit_reason": null
+    },
+    "CRO/USDC": {
+      "symbol": "CRO/USDC",
+      "entry_price": 0.06111,
+      "size_usdc": 50.0,
+      "quantity": 818.1966944853543,
+      "entry_time": "2026-09-09T09:13:07.683897+00:00",
+      "peak_price": 0.06111,
       "trailing_armed": false,
       "trailing_stop": 0.0,
       "tp_pct": 0.15,
@@ -78,12 +78,28 @@
       "exit_reason": "take_profit",
       "entry_time": "2026-09-04T14:27:30.580373+00:00",
       "exit_time": "2026-09-07T18:23:47.557068+00:00"
+    },
+    {
+      "symbol": "ATOM/USDC",
+      "entry_price": 1.6655,
+      "exit_price": 1.9638,
+      "quantity": 30.02101471029721,
+      "amount_usdc": 50.0,
+      "gross_pnl": 8.95526868808166,
+      "buy_fee": 0.05,
+      "sell_fee": 0.05895526868808166,
+      "total_fees": 0.10895526868808167,
+      "net_pnl": 8.846313419393576,
+      "exit_reason": "take_profit",
+      "entry_time": "2026-09-07T13:37:25.166142+00:00",
+      "exit_time": "2026-09-09T09:13:07.683897+00:00"
     }
   ],
   "last_close_by_symbol": {
     "XRP/USDC": "2026-09-04T14:27:30.580373+00:00",
     "LTC/USDC": "2026-09-07T13:37:25.166142+00:00",
-    "PEAQ/USDC": "2026-09-07T18:23:47.557068+00:00"
+    "PEAQ/USDC": "2026-09-07T18:23:47.557068+00:00",
+    "ATOM/USDC": "2026-09-09T09:13:07.683897+00:00"
   },
   "pause_entries_until": null
 }

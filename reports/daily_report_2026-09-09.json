@@ -1,0 +1,115 @@
+﻿{
+  "date": "2026-09-09",
+  "generated_at": "2026-09-09T09:13:07.683897+00:00",
+  "net_profit_usdc": 8.8463,
+  "net_profit_pct": 8.8463,
+  "total_fees_usdc": 0.109,
+  "trades": [
+    {
+      "symbol": "ATOM/USDC",
+      "entry_price": 1.6655,
+      "exit_price": 1.9638,
+      "quantity": 30.02101471029721,
+      "amount_usdc": 50.0,
+      "gross_pnl": 8.95526868808166,
+      "buy_fee": 0.05,
+      "sell_fee": 0.05895526868808166,
+      "total_fees": 0.10895526868808167,
+      "net_pnl": 8.846313419393576,
+      "exit_reason": "take_profit",
+      "entry_time": "2026-09-07T13:37:25.166142+00:00",
+      "exit_time": "2026-09-09T09:13:07.683897+00:00"
+    }
+  ],
+  "params_used": {
+    "TP_PCT": 0.15,
+    "SL_PCT": 0.08,
+    "TRAILING_ARM_PCT": 0.05,
+    "TRAILING_STEP_PCT": 0.03,
+    "FEE_RATE": 0.001,
+    "NEAR_BREAKOUT_MAX_DISTANCE_PCT": 8.0,
+    "VOLUME_RATIO_THRESHOLD": 0.4,
+    "MIN_EMA10_SLOPE_PCT": 0.0,
+    "RSI_MIN": 45.0,
+    "RSI_MAX": 85.0,
+    "ADX_MIN": 30.0
+  },
+  "last_7d": {
+    "dates": [
+      "2026-09-02",
+      "2026-09-03",
+      "2026-09-04",
+      "2026-09-05",
+      "2026-09-06",
+      "2026-09-07",
+      "2026-09-08"
+    ],
+    "pnl_list": [
+      2.4525,
+      1.769,
+      0.0,
+      4.6707,
+      2.0792,
+      0.8394,
+      6.8227
+    ],
+    "total_profit": 18.6335,
+    "avg_daily": 2.6619,
+    "std_daily": 2.1691
+  },
+  "top5_ranking": [
+    {
+      "symbol": "CRO/USDC",
+      "growth_score": 77.51,
+      "rsi_1h": "59.27",
+      "vol4h": 4.259048538968078,
+      "dist_breakout_pct": 4.4346260841106275
+    },
+    {
+      "symbol": "ATOM/USDC",
+      "growth_score": 74.52,
+      "rsi_1h": "74.94",
+      "vol4h": 1.1143444821052582,
+      "dist_breakout_pct": 0.6670740401262915
+    },
+    {
+      "symbol": "MANA/USDC",
+      "growth_score": 67.45,
+      "rsi_1h": "60.61",
+      "vol4h": 0.4074698954611188,
+      "dist_breakout_pct": 0.16920473773266317
+    },
+    {
+      "symbol": "BTC/USDC",
+      "growth_score": 62.68,
+      "rsi_1h": "61.96",
+      "vol4h": 0.6281081837679168,
+      "dist_breakout_pct": 1.2822801904182346
+    },
+    {
+      "symbol": "ETH/USDC",
+      "growth_score": 62.28,
+      "rsi_1h": "58.16",
+      "vol4h": 0.170982178020908,
+      "dist_breakout_pct": 0.9162517264300007
+    }
+  ],
+  "open_positions_end": {
+    "XDC/USDC": {
+      "symbol": "XDC/USDC",
+      "entry_price": 0.02963,
+      "size_usdc": 50.0,
+      "quantity": 1687.4789065136686,
+      "entry_time": "2026-09-08T02:38:26.603444+00:00",
+      "peak_price": 0.02963,
+      "trailing_armed": false,
+      "trailing_stop": 0.0,
+      "tp_pct": 0.15,
+      "sl_pct": 0.08,
+      "status": "open",
+      "exit_price": null,
+      "exit_time": null,
+      "exit_reason": null
+    }
+  }
+}
