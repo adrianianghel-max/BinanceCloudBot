@@ -1,16 +1,16 @@
 ﻿{
   "params": {
-    "NEAR_BREAKOUT_MAX_DISTANCE_PCT": 20.0,
+    "NEAR_BREAKOUT_MAX_DISTANCE_PCT": 8.0,
     "VOLUME_RATIO_THRESHOLD": 0.4,
-    "MIN_EMA10_SLOPE_PCT": 0.2,
+    "MIN_EMA10_SLOPE_PCT": 0.0,
     "RSI_MIN": 45.0,
     "RSI_MAX": 85.0,
     "ADX_MIN": 30.0
   },
-  "updated_at": "2026-09-08T02:38:26.603444+00:00",
-  "backtest_day": "2026-09-07",
-  "pnl_net": 0.8394359787277501,
-  "profit_factor": 99.0,
-  "max_drawdown_usdc": 0.0,
+  "updated_at": "2026-09-09T00:12:49.120494+00:00",
+  "backtest_day": "2026-09-08",
+  "pnl_net": 6.822673267326733,
+  "profit_factor": 12.973241822683656,
+  "max_drawdown_usdc": -1.534653465346536,
   "explore": false
 }
