@@ -35,7 +35,7 @@ jobs:
           echo "auto_scan_enabled=$(python -c "import json; print(str(json.load(open('config_state.json')).get('auto_scan_enabled', True)).lower())")" >> "$GITHUB_OUTPUT"
 
       - name: 🔍 Run scanner (scan + paper trading + daily backtest)
-        if: github.event_name != 'schedule' || steps.scan_state.outputs.auto_scan_enabled != 'false'
+        if: steps.scan_state.outputs.auto_scan_enabled != 'false'
         shell: bash
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
@@ -43,7 +43,7 @@ jobs:
         run: python scanner.py
 
       - name: 💾 Persist state (alerts, paper portfolio, params, history, reports)
-        if: github.event_name != 'schedule' || steps.scan_state.outputs.auto_scan_enabled != 'false'
+        if: steps.scan_state.outputs.auto_scan_enabled != 'false'
         shell: bash
         run: |
           git config user.name "github-actions[bot]"

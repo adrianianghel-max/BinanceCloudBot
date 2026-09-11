@@ -95,7 +95,9 @@ project/
   max 2 simultan; închide la TP/SL/trailing și forțat la 23:59 UTC
 - Persistă toate fișierele de stare + rapoartele în repo
 
-### 2) Start Auto Scan / 3) Stop Auto Scan — nemodificate (prin `config_state.json`)
+### 2) Start Auto Scan / 3) Stop Auto Scan
+- `stop_scan.yml` setează `auto_scan_enabled=false`, iar `scan.yml` nu mai rulează scannerul cât timp botul este oprit
+- Pentru repornire se folosește `start_scan.yml`, care reactivează explicit auto scan-ul în `config_state.json`
 
 ## Local Run
 
