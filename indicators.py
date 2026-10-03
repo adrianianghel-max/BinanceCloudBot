@@ -423,6 +423,53 @@ def calculate_price_acceleration(df: pd.DataFrame, lookback: int = 5) -> Optiona
     return float((current - previous) / abs(previous) * 100.0)
 
 
+def detect_accumulation(
+    df: pd.DataFrame,
+    volume_acceleration_min: float = 0.8,
+    max_price_change_pct: float = 8.0,
+) -> bool:
+    """Identify a volatility squeeze with supported volume and limited price drift."""
+    if df is None or df.empty:
+        return False
+
+    squeeze = calculate_bollinger_squeeze(df)
+    volume_acceleration = calculate_volume_acceleration(df)
+    price_change = calculate_price_acceleration(df)
+    return (
+        squeeze is True
+        and volume_acceleration is not None
+        and volume_acceleration >= volume_acceleration_min
+        and price_change is not None
+        and abs(price_change) <= max_price_change_pct
+    )
+
+
+def confirm_breakout(
+    df: pd.DataFrame,
+    lookback: int = 20,
+    volume_ratio_min: float = 1.2,
+) -> bool:
+    """Confirm a closed-candle breakout above recent highs with above-average volume."""
+    if df is None or len(df) < lookback + 1 or lookback < 1:
+        return False
+
+    previous = df.iloc[-(lookback + 1):-1]
+    prior_high = previous["high"].max()
+    average_volume = previous["volume"].mean()
+    close = df["close"].iloc[-1]
+    volume = df["volume"].iloc[-1]
+    if (
+        pd.isna(prior_high)
+        or pd.isna(average_volume)
+        or pd.isna(close)
+        or pd.isna(volume)
+        or prior_high <= 0
+        or average_volume <= 0
+    ):
+        return False
+    return bool(close > prior_high and volume >= average_volume * volume_ratio_min)
+
+
 def calculate_volume_ratio(df: pd.DataFrame, period: int = 20) -> Optional[float]:
     if len(df) < period:
         return None

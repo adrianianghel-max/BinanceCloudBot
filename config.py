@@ -172,7 +172,7 @@ POSITION_SIZE_USDC = 50.0       # 50 USDC per poziție
 TOTAL_CAPITAL_USDC = 100.0      # 2 × 50 USDC
 
 # Exit strategy (SIMULATED — paper trading)
-TAKE_PROFIT_PCT = 0.15          # TP: +15% față de prețul de cumpărare
+TAKE_PROFIT_PCT = 0.18          # TP: +18% față de prețul de cumpărare
 STOP_LOSS_PCT = 0.08            # SL: -8% față de prețul de cumpărare
 TRAILING_ENABLED = True         # Trailing stop activ
 TRAILING_ARM_PCT = 0.05         # se armează după ce profitul atinge +5%
@@ -276,6 +276,13 @@ PRE_EXPLOSION_WEIGHTS = {
     "orderbook": 10,
     "large_trade": 10,
 }
+
+ACCUMULATION_VOLUME_ACCEL_MIN = 0.8
+ACCUMULATION_MAX_PRICE_CHANGE_PCT = 8.0
+LOW_TIMEFRAME_BREAKOUT_LOOKBACK = 20
+LOW_TIMEFRAME_BREAKOUT_VOLUME_RATIO = 1.2
+WINNER_SCORE_BONUS = 2.0
+WINNER_SCORE_BONUS_MAX = 6.0
 
 
 # ================================
