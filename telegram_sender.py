@@ -22,12 +22,19 @@ def _binance_url_for_symbol(symbol: str) -> str:
 
 
 def _build_telegram_top5(rows: Sequence[dict]) -> str:
-    lines = ["🚀 TOP 5 USDC - BREAKOUT ~1h", ""]
+    lines = ["🚀 TOP 5 USDC - ACUMULARE → EXPLOZIE", ""]
     for idx, row in enumerate(rows, start=1):
         symbol_clean = format_symbol_no_slash(row["symbol"])
         lines.append(
             f"{idx}. <b>{symbol_clean}</b>\n"
             f"   Scor: <b>{row.get('growth_score', 0):.2f}%</b> | "
+            f"Acumulări: <b>{row.get('accumulation_count', 0)}/3</b> "
+            f"({', '.join(row.get('accumulation_timeframes', [])) or 'N/A'}) | "
+            f"Confirmare: <b>{'15m' if row.get('breakout_15m_ok') else ''}"
+            f"{' + ' if row.get('breakout_15m_ok') and row.get('breakout_5m_ok') else ''}"
+            f"{'5m' if row.get('breakout_5m_ok') else ''}"
+            f"{'N/A' if not row.get('explosion_confirmed') else ''}</b> | "
+            f"Câștigător recent: {row.get('winner_days', 0)} zile | "
             f"RSI: {row.get('rsi_1h', 'N/A')} | "
             f"EMA10: {row.get('ema10_slope', 0):.2f}% | "
             f"Vol: {row.get('vol4h', 0):.2f}x | "

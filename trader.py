@@ -829,6 +829,20 @@ def _save_history(entries: list[dict]) -> None:
     save_json_state(config.STRATEGY_HISTORY_PATH, {"entries": entries})
 
 
+def learned_winner_counts(history: Optional[list[dict]] = None) -> dict[str, int]:
+    """Count recent prior-day +18% winners by symbol for adaptive scan ranking."""
+    entries = _load_history() if history is None else history
+    counts: dict[str, int] = {}
+    for entry in entries[-config.OPTIMIZER_HISTORY_DAYS:]:
+        winners = entry.get("winner_symbols", [])
+        if not isinstance(winners, list):
+            continue
+        for symbol in set(winners):
+            if isinstance(symbol, str):
+                counts[symbol] = counts.get(symbol, 0) + 1
+    return counts
+
+
 def optimize_daily(exchange, symbols: list[str], now: datetime) -> bool:
     """Recalibrare zilnică: backtest pe ziua precedentă + alegerea parametrilor.
 
@@ -883,6 +897,11 @@ def optimize_daily(exchange, symbols: list[str], now: datetime) -> bool:
         "pnl_net": best_res.get("pnl_net"),
         "profit_factor": best_res.get("profit_factor"),
         "max_drawdown_usdc": best_res.get("max_drawdown_usdc"),
+        "previous_day_winners": [
+            trade["symbol"]
+            for trade in best_res.get("trades", [])
+            if trade.get("exit_reason") == "take_profit" and trade.get("net_pnl", 0) > 0
+        ],
         "explore": explore_due,
     })
     history = _load_history()
@@ -893,6 +912,11 @@ def optimize_daily(exchange, symbols: list[str], now: datetime) -> bool:
         "profit_factor": best_res.get("profit_factor"),
         "max_drawdown_usdc": best_res.get("max_drawdown_usdc"),
         "trades": [t["symbol"] for t in best_res.get("trades", [])],
+        "winner_symbols": [
+            trade["symbol"]
+            for trade in best_res.get("trades", [])
+            if trade.get("exit_reason") == "take_profit" and trade.get("net_pnl", 0) > 0
+        ],
     })
     history = history[-config.OPTIMIZER_HISTORY_DAYS:]
     _save_history(history)

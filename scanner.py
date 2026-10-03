@@ -17,6 +17,8 @@ from indicators import (
     calculate_macd_values,
     calculate_rsi_pair,
     calculate_volume_ratio,
+    confirm_breakout,
+    detect_accumulation,
     is_daily_bullish,
     is_daily_early_trend,
     prepare_ohlcv_df,
@@ -27,7 +29,7 @@ from state_manager import (
     update_alert_state,
 )
 from telegram_sender import send_telegram_message
-from trader import manage_trading, optimize_daily, setup_file_logging
+from trader import learned_winner_counts, manage_trading, optimize_daily, setup_file_logging
 
 
 logging.basicConfig(
@@ -132,7 +134,25 @@ def create_exchange() -> tuple[ccxt.Exchange, tuple[str, ...]]:
     raise last_error
 
 
-def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | None:
+def _closed_candles(df, timeframe: str, now: datetime):
+    interval = {
+        "1d": timedelta(days=1),
+        "4h": timedelta(hours=4),
+        "1h": timedelta(hours=1),
+        "15m": timedelta(minutes=15),
+        "5m": timedelta(minutes=5),
+    }[timeframe]
+    return df.loc[df["timestamp"] + interval <= now].reset_index(drop=True)
+
+
+def analyze_symbol(
+    exchange: ccxt.Exchange,
+    symbol: str,
+    winner_counts: dict[str, int] | None = None,
+    now: datetime | None = None,
+) -> dict[str, Any] | None:
+    now = now or datetime.now(timezone.utc)
+    winner_counts = winner_counts or {}
     try:
         daily_raw = with_retries(exchange.fetch_ohlcv, symbol, "1d", limit=config.DAILY_LIMIT)
         h4_raw = with_retries(exchange.fetch_ohlcv, symbol, "4h", limit=config.H4_LIMIT)
@@ -150,9 +170,43 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
             "error": "Missing OHLCV data",
         }
 
-    daily_df = add_ema_columns(prepare_ohlcv_df(daily_raw))
-    h4_df = prepare_ohlcv_df(h4_raw)
-    h1_df = prepare_ohlcv_df(h1_raw) if h1_raw else None
+    daily_df = add_ema_columns(_closed_candles(prepare_ohlcv_df(daily_raw), "1d", now))
+    h4_df = _closed_candles(prepare_ohlcv_df(h4_raw), "4h", now)
+    h1_df = _closed_candles(prepare_ohlcv_df(h1_raw), "1h", now) if h1_raw else None
+
+    accumulation_timeframes = [
+        timeframe
+        for timeframe, frame in (("1d", daily_df), ("4h", h4_df), ("1h", h1_df))
+        if frame is not None and detect_accumulation(
+            frame,
+            volume_acceleration_min=config.ACCUMULATION_VOLUME_ACCEL_MIN,
+            max_price_change_pct=config.ACCUMULATION_MAX_PRICE_CHANGE_PCT,
+        )
+    ]
+    breakout_15m_ok = False
+    breakout_5m_ok = False
+    if accumulation_timeframes:
+        for timeframe, limit, result_key in (
+            ("15m", config.H15_LIMIT, "15m"),
+            ("5m", config.M5_LIMIT, "5m"),
+        ):
+            try:
+                raw = with_retries(exchange.fetch_ohlcv, symbol, timeframe, limit=limit)
+                if raw:
+                    frame = _closed_candles(prepare_ohlcv_df(raw), timeframe, now)
+                    confirmed = confirm_breakout(
+                        frame,
+                        lookback=config.LOW_TIMEFRAME_BREAKOUT_LOOKBACK,
+                        volume_ratio_min=config.LOW_TIMEFRAME_BREAKOUT_VOLUME_RATIO,
+                    )
+                    if result_key == "15m":
+                        breakout_15m_ok = confirmed
+                    else:
+                        breakout_5m_ok = confirmed
+            except ccxt.BaseError as exc:
+                logger.warning("Could not check %s breakout for %s: %s", timeframe, symbol, exc)
+    explosion_confirmed = breakout_15m_ok or breakout_5m_ok
+    winner_days = winner_counts.get(symbol, 0)
 
     daily_strict_ok = is_daily_bullish(daily_df)
     if config.ALLOW_EARLY_TREND:
@@ -214,8 +268,21 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
             rsi_value=rsi_current,
             use_1h_filter=config.USE_1H_FILTER,
         )
+        score = min(
+            100.0,
+            score + min(winner_days * config.WINNER_SCORE_BONUS, config.WINNER_SCORE_BONUS_MAX),
+        )
 
-    qualified = daily_ok and macd_ok and volume_ok and near_breakout_ok and adx_ok and rsi_ok
+    qualified = (
+        daily_ok
+        and macd_ok
+        and volume_ok
+        and near_breakout_ok
+        and adx_ok
+        and rsi_ok
+        and bool(accumulation_timeframes)
+        and explosion_confirmed
+    )
     price = None
     if qualified:
         ticker = with_retries(exchange.fetch_ticker, symbol)
@@ -233,6 +300,12 @@ def analyze_symbol(exchange: ccxt.Exchange, symbol: str) -> dict[str, Any] | Non
         "dist_breakout_pct": distance_to_breakout,
         "adx_4h": adx_4h,
         "growth_score": score,
+        "accumulation_count": len(accumulation_timeframes),
+        "accumulation_timeframes": accumulation_timeframes,
+        "breakout_15m_ok": breakout_15m_ok,
+        "breakout_5m_ok": breakout_5m_ok,
+        "explosion_confirmed": explosion_confirmed,
+        "winner_days": winner_days,
         "daily_ok": daily_ok,
         "ema_slope_ok": ema_slope_ok,
         "volume_ok": volume_ok,
@@ -255,9 +328,9 @@ def print_console_table(rows: list[dict[str, Any]]) -> None:
 
     header = (
         "| Symbol | Price | RSI | MACD | EMA10 Slope | Vol Ratio | "
-        "Dist Breakout % | Growth Score |"
+        "Dist Breakout % | Accumulations | Explosion | Growth Score |"
     )
-    separator = "|---|---:|---|---:|---:|---|---:|---:|"
+    separator = "|---|---:|---|---:|---:|---|---:|---:|---|---:|"
 
     print(header)
     print(separator)
@@ -270,7 +343,8 @@ def print_console_table(rows: list[dict[str, Any]]) -> None:
         print(
             f"| {row.get('symbol', 'N/A')} | {price} | {row.get('rsi_1h', 'N/A')} | "
             f"{row.get('macd', 'N/A')} | {ema10_slope} | {vol4h} | "
-            f"{dist_breakout} | {growth_score} |"
+            f"{dist_breakout} | {row.get('accumulation_count', 0)} | "
+            f"{'YES' if row.get('explosion_confirmed') else 'NO'} | {growth_score} |"
         )
 
 
@@ -315,6 +389,8 @@ def main() -> int:
         optimize_daily(exchange, symbols, now_utc)
     except Exception as exc:  # pylint: disable=broad-except
         logger.exception("Recalibrare zilnică eșuată: %s", exc)
+    winner_counts = learned_winner_counts()
+    logger.info("Recent +18%% winner symbols learned: %s", winner_counts)
 
     counters = {
         "TOTAL_SYMBOLS": len(symbols),
@@ -326,6 +402,8 @@ def main() -> int:
         "AFTER_MACD_FILTER": 0,
         "AFTER_ADX_FILTER": 0,
         "AFTER_BREAKOUT_FILTER": 0,
+        "AFTER_ACCUMULATION_FILTER": 0,
+        "AFTER_EXPLOSION_CONFIRMATION": 0,
         "AFTER_SCORING_FILTER": 0,
         "FINAL_QUALIFIED": 0,
     }
@@ -336,7 +414,7 @@ def main() -> int:
     for idx, symbol in enumerate(symbols, start=1):
         try:
             logger.info("Analyzing [%s/%s] %s", idx, len(symbols), symbol)
-            diagnostic = analyze_symbol(exchange, symbol)
+            diagnostic = analyze_symbol(exchange, symbol, winner_counts, now_utc)
             if not diagnostic:
                 continue
 
@@ -374,6 +452,14 @@ def main() -> int:
             if not diagnostic.get("near_breakout_ok", False):
                 continue
             counters["AFTER_BREAKOUT_FILTER"] += 1
+
+            if not diagnostic.get("accumulation_count", 0):
+                continue
+            counters["AFTER_ACCUMULATION_FILTER"] += 1
+
+            if not diagnostic.get("explosion_confirmed", False):
+                continue
+            counters["AFTER_EXPLOSION_CONFIRMATION"] += 1
 
             if diagnostic.get("growth_score") is None:
                 continue
