@@ -15,6 +15,7 @@ from trader import (
     Portfolio,
     Position,
     baseline_params,
+    learned_winner_counts,
     params_key,
 )
 
@@ -47,7 +48,7 @@ class TestPosition(unittest.TestCase):
         )
 
     def test_take_profit(self):
-        reason = self.pos.evaluate(115.0)  # >= +15%
+        reason = self.pos.evaluate(118.0)  # >= +18%
         self.assertEqual(reason, "take_profit")
 
     def test_stop_loss(self):
@@ -75,10 +76,10 @@ class TestPosition(unittest.TestCase):
         self.assertAlmostEqual(self.pos.trailing_stop, 116.4, places=1)
 
     def test_close_net_fees(self):
-        trade = self.pos.close(115.0, "take_profit", datetime(2026, 1, 1, 2, tzinfo=timezone.utc))
+        trade = self.pos.close(118.0, "take_profit", datetime(2026, 1, 1, 2, tzinfo=timezone.utc))
         buy_fee = 50.0 * 0.001
-        sell_fee = self.pos.quantity * 115.0 * 0.001
-        expected_net = (115.0 - 100.0) * self.pos.quantity - buy_fee - sell_fee
+        sell_fee = self.pos.quantity * 118.0 * 0.001
+        expected_net = (118.0 - 100.0) * self.pos.quantity - buy_fee - sell_fee
         self.assertAlmostEqual(trade["net_pnl"], expected_net, places=6)
         self.assertEqual(trade["exit_reason"], "take_profit")
         self.assertEqual(trade["total_fees"], buy_fee + sell_fee)
@@ -108,7 +109,7 @@ class TestPortfolio(unittest.TestCase):
             portfolio = Portfolio(path)
             portfolio.open_position("SOL/USDC", 100.0, self.now)
             portfolio.close_position(
-                "SOL/USDC", 115.0, "take_profit", self.now + timedelta(hours=1))
+                "SOL/USDC", 118.0, "take_profit", self.now + timedelta(hours=1))
             portfolio.save()
 
             loaded = Portfolio(path).load()
@@ -160,12 +161,12 @@ class TestBacktester(unittest.TestCase):
     def test_simulate_day_tp(self):
         candles = _make_candles([
             (100, 100, 100, 100),
-            (100, 116, 96, 115),   # TP +15% atins => take_profit
+            (100, 120, 96, 119),   # TP +18% atins => take_profit
             (115, 115, 115, 115),
         ])
         result = Backtester.simulate_day(candles, baseline_params())
         self.assertEqual(result["exit_reason"], "take_profit")
-        self.assertAlmostEqual(result["exit_price"], 115.0, places=6)
+        self.assertAlmostEqual(result["exit_price"], 118.0, places=6)
         self.assertGreater(result["net_pnl"], 0)
 
     def test_simulate_day_sl(self):
@@ -190,6 +191,17 @@ class TestBacktester(unittest.TestCase):
 
 
 class TestParameterOptimizer(unittest.TestCase):
+    def test_learned_winner_counts_count_each_symbol_once_per_day(self):
+        history = [
+            {"winner_symbols": ["A/USDC", "A/USDC", "B/USDC"]},
+            {"winner_symbols": ["A/USDC", "C/USDC"]},
+            {"winner_symbols": "invalid"},
+        ]
+        self.assertEqual(
+            learned_winner_counts(history),
+            {"A/USDC": 2, "B/USDC": 1, "C/USDC": 1},
+        )
+
     def test_generate_combos_includes_baseline(self):
         optimizer = ParameterOptimizer()
         combos = optimizer.generate_combos(datetime(2026, 1, 5, tzinfo=timezone.utc))

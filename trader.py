@@ -3,7 +3,7 @@
 Transformă scannerul existent într-un bot de trading automatizat care:
   * alege cele mai bune 2 simboluri USDC după growth_score (filtrul existent);
   * simulează cumpărarea / vânzarea a 50 USDC per simbol (fără ordine reale!);
-  * aplică TP (+15%), SL (-8%), trailing stop (armat la +5%, pas 3%)
+  * aplică TP (+18%), SL (-8%), trailing stop (armat la +5%, pas 3%)
     și închidere forțată la 23:59 UTC;
   * aplică comision 0.1% per tranzacție (Binance spot standard) și calculează
     profit net;

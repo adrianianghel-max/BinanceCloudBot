@@ -6,6 +6,7 @@ import unittest
 
 import numpy as np
 import pandas as pd
+from unittest.mock import patch
 
 from indicators import (
     add_ema_columns,
@@ -14,6 +15,8 @@ from indicators import (
     calculate_atr,
     calculate_bollinger_bandwidth,
     calculate_bollinger_squeeze,
+    confirm_breakout,
+    detect_accumulation,
     calculate_distance_to_breakout_pct,
     calculate_ema10_slope_pct,
     calculate_growth_score,
@@ -123,6 +126,39 @@ class TestBreakout(unittest.TestCase):
         dist = calculate_distance_to_breakout_pct(df, lookback=20)
         self.assertIsNotNone(dist)
         self.assertIsInstance(dist, float)
+
+    def test_confirm_breakout_requires_price_and_volume_confirmation(self):
+        df = pd.DataFrame({
+            "high": [10.0] * 20 + [11.0],
+            "close": [9.0] * 20 + [10.5],
+            "volume": [100.0] * 20 + [130.0],
+        })
+        self.assertTrue(confirm_breakout(df, lookback=20, volume_ratio_min=1.2))
+
+        df.loc[len(df) - 1, "volume"] = 110.0
+        self.assertFalse(confirm_breakout(df, lookback=20, volume_ratio_min=1.2))
+
+    def test_confirm_breakout_rejects_insufficient_history(self):
+        df = pd.DataFrame({"high": [10.0], "close": [11.0], "volume": [100.0]})
+        self.assertFalse(confirm_breakout(df, lookback=20))
+
+
+class TestAccumulation(unittest.TestCase):
+    @patch("indicators.calculate_price_acceleration", return_value=2.0)
+    @patch("indicators.calculate_volume_acceleration", return_value=1.0)
+    @patch("indicators.calculate_bollinger_squeeze", return_value=True)
+    def test_detect_accumulation_requires_squeeze_volume_and_stable_price(
+        self, _squeeze, _volume, _price
+    ):
+        df = pd.DataFrame({"close": [100.0]})
+        self.assertTrue(detect_accumulation(df))
+
+    @patch("indicators.calculate_price_acceleration", return_value=2.0)
+    @patch("indicators.calculate_volume_acceleration", return_value=1.0)
+    @patch("indicators.calculate_bollinger_squeeze", return_value=False)
+    def test_detect_accumulation_rejects_no_squeeze(self, _squeeze, _volume, _price):
+        df = pd.DataFrame({"close": [100.0]})
+        self.assertFalse(detect_accumulation(df))
 
 
 class TestADX(unittest.TestCase):

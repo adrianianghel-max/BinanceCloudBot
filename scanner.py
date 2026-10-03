@@ -23,6 +23,7 @@ from indicators import (
     is_daily_early_trend,
     prepare_ohlcv_df,
 )
+from market_data import is_data_fresh
 from state_manager import (
     get_alert_state,
     should_send_only_new,
@@ -173,6 +174,8 @@ def analyze_symbol(
     daily_df = add_ema_columns(_closed_candles(prepare_ohlcv_df(daily_raw), "1d", now))
     h4_df = _closed_candles(prepare_ohlcv_df(h4_raw), "4h", now)
     h1_df = _closed_candles(prepare_ohlcv_df(h1_raw), "1h", now) if h1_raw else None
+    if daily_df.empty or h4_df.empty or (config.USE_1H_FILTER and (h1_df is None or h1_df.empty)):
+        return {"symbol": symbol, "error": "No completed OHLCV candles"}
 
     accumulation_timeframes = [
         timeframe
@@ -193,7 +196,11 @@ def analyze_symbol(
             try:
                 raw = with_retries(exchange.fetch_ohlcv, symbol, timeframe, limit=limit)
                 if raw:
-                    frame = _closed_candles(prepare_ohlcv_df(raw), timeframe, now)
+                    frame = prepare_ohlcv_df(raw)
+                    if not is_data_fresh(frame, timeframe):
+                        logger.warning("Stale %s data for %s; breakout not confirmed.", timeframe, symbol)
+                        continue
+                    frame = _closed_candles(frame, timeframe, now)
                     confirmed = confirm_breakout(
                         frame,
                         lookback=config.LOW_TIMEFRAME_BREAKOUT_LOOKBACK,
@@ -353,7 +360,7 @@ def print_top20_by_score(rows: list[dict[str, Any]]) -> None:
         logger.info("No rows available for TOP 20 score diagnostic.")
         return
 
-    header = "Symbol | Score | RSI | EMA10 Slope | Volume Ratio | Distance To Breakout"
+    header = "Symbol | Score | Accumulation | Explosion | Winner Days | RSI | EMA10 Slope | Volume Ratio | Distance To Breakout"
     separator = "-" * len(header)
     print(header)
     print(separator)
@@ -361,6 +368,11 @@ def print_top20_by_score(rows: list[dict[str, Any]]) -> None:
         print(
             f"{row.get('symbol', 'N/A')} | "
             f"{_format_float(row.get('growth_score'), 2)} | "
+            f"{row.get('accumulation_count', 0)}/3 | "
+            f"{'15m' if row.get('breakout_15m_ok') else ''}"
+            f"{'+' if row.get('breakout_15m_ok') and row.get('breakout_5m_ok') else ''}"
+            f"{'5m' if row.get('breakout_5m_ok') else ('N/A' if not row.get('explosion_confirmed') else '')} | "
+            f"{row.get('winner_days', 0)} | "
             f"{row.get('rsi_1h', 'N/A')} | "
             f"{_format_float(row.get('ema10_slope'), 3)} | "
             f"{_format_float(row.get('vol4h'), 2)} | "
@@ -421,6 +433,13 @@ def main() -> int:
             if diagnostic.get("error"):
                 skipped_due_to_error += 1
                 continue
+            logger.info(
+                "%s accumulation=%d/3 (%s), breakout_confirmed=%s",
+                symbol,
+                diagnostic.get("accumulation_count", 0),
+                ",".join(diagnostic.get("accumulation_timeframes", [])) or "none",
+                diagnostic.get("explosion_confirmed", False),
+            )
 
             if diagnostic.get("growth_score") is not None:
                 score_pool.append(diagnostic)

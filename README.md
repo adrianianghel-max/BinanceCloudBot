@@ -8,19 +8,22 @@ with Telegram alerts, daily backtest/recalibration ("smart trader") and daily re
 
 ## Features
 
-### Scanare (modulul de semnale — nemodificat funcțional)
+### Scanare
 - Scans all active Binance Spot symbols quoted in `USDC`
 - Excludes leveraged tokens ending with: `UP`, `DOWN`, `BULL`, `BEAR`
-- Daily filter: `EMA10 > EMA50 > EMA200`, `Close > EMA10`, EMA10 slope > 0.05%
-- 4H filter: `MACD line > Signal line`, volume spike, proximity to breakout (≤ 3%),
-  `ADX ≥ 20`
-- 1H filter: `RSI(14) ∈ [55, 80]`, RSI rising, volume rising
-- Transparent growth score (0–100%) and Top-5 Telegram alerts (`ALERT_ONLY_NEW`)
+- Detects accumulation (Bollinger squeeze, supported volume, limited drift) on 1D/4H/1H
+  and reports the number of matching timeframes per symbol.
+- Fetches 15m/5m candles for accumulated symbols; a closed-candle breakout with
+  above-average volume on either timeframe confirms the entry.
+- Retains daily trend, 4H MACD/volume/breakout/ADX, and 1H RSI/volume filters.
+- Ranks candidates using the growth score plus a capped bonus learned from symbols
+  that reached the take-profit in recent daily backtests.
+- Displays accumulation and breakout-confirmation details in Top-5 Telegram alerts.
 
 ### Trading PAPER (modulul `trader.py`)
 - Selectează **top-2 simboluri calificate după growth_score** (max 2 poziții simultane)
 - **50 USDC per poziție** (capital total 100 USDC)
-- **Take-profit +15%**, **Stop-loss −8%**, **trailing stop** (armat la +5%, pas 3%,
+- **Take-profit +18%**, **Stop-loss −8%**, **trailing stop** (armat la +5%, pas 3%,
   niciodată sub breakeven), **închidere forțată la 23:59 UTC**
 - **Comision 0.1% per tranzacție (buy & sell)** → profit net raportat
 - Cooldown 48h per simbol, protecție la drawdown (pauză intrări), cooldown rotire
@@ -37,6 +40,8 @@ with Telegram alerts, daily backtest/recalibration ("smart trader") and daily re
 - Alege combinația cu cel mai mare **profit net** (tie-break: Profit Factor, apoi drawdown)
 - **Medie ponderată** cu performanța din ultimele 3–5 zile (`strategy_history.json`)
 - **Explorare săptămânală** cu combinații aleatorii (anti-stagnare / descoperire regim nou)
+- Învață din simbolurile care au atins TP-ul de +18% în backtestul zilei precedente;
+  istoricul recent al câștigătorilor contribuie gradual la ranking.
 - Backtest limitat la `BACKTEST_SYMBOLS_LIMIT` (25 by default) → se încadrează în 5 minute
   în GitHub Actions
 
