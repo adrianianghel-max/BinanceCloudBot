@@ -23,7 +23,7 @@ with Telegram alerts, daily backtest/recalibration ("smart trader") and daily re
 ### Trading PAPER (modulul `trader.py`)
 - Selectează **top-2 simboluri calificate după growth_score** (max 2 poziții simultane)
 - **50 USDC per poziție** (capital total 100 USDC)
-- **Take-profit +18%**, **Stop-loss −8%**, **trailing stop** (armat la +5%, pas 3%,
+- **Take-profit +8%**, **Stop-loss −8%**, **trailing stop** (armat la +5%, pas 3%,
   niciodată sub breakeven), **închidere forțată la 23:59 UTC**
 - **Comision 0.1% per tranzacție (buy & sell)** → profit net raportat
 - Cooldown 48h per simbol, protecție la drawdown (pauză intrări), cooldown rotire
@@ -40,7 +40,7 @@ with Telegram alerts, daily backtest/recalibration ("smart trader") and daily re
 - Alege combinația cu cel mai mare **profit net** (tie-break: Profit Factor, apoi drawdown)
 - **Medie ponderată** cu performanța din ultimele 3–5 zile (`strategy_history.json`)
 - **Explorare săptămânală** cu combinații aleatorii (anti-stagnare / descoperire regim nou)
-- Învață din simbolurile care au atins TP-ul de +18% în backtestul zilei precedente;
+- Învață din simbolurile care au atins TP-ul de +8% în backtestul zilei precedente;
   istoricul recent al câștigătorilor contribuie gradual la ranking.
 - Backtest limitat la `BACKTEST_SYMBOLS_LIMIT` (25 by default) → se încadrează în 5 minute
   în GitHub Actions
@@ -93,7 +93,7 @@ project/
 ## Workflows
 
 ### 1) Run Scanner (`.github/workflows/scan.yml`)
-- Schedule la fiecare **15 minute** (monitorizare TP/SL continuă)
+- Schedule la fiecare **10 minute** (monitorizare TP/SL continuă)
 - La prima rulare a zilei rulează **backtest + recalibrare**, apoi scanările folosesc
   parametrii optimizați
 - Deschide poziții noi doar în fereastra de intrare (default 00:00–22:00 UTC),

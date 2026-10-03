@@ -3,7 +3,7 @@
 Transformă scannerul existent într-un bot de trading automatizat care:
   * alege cele mai bune 2 simboluri USDC după growth_score (filtrul existent);
   * simulează cumpărarea / vânzarea a 50 USDC per simbol (fără ordine reale!);
-  * aplică TP (+18%), SL (-8%), trailing stop (armat la +5%, pas 3%)
+  * aplică TP (+8%), SL (-8%), trailing stop (armat la +5%, pas 3%)
     și închidere forțată la 23:59 UTC;
   * aplică comision 0.1% per tranzacție (Binance spot standard) și calculează
     profit net;
@@ -830,10 +830,15 @@ def _save_history(entries: list[dict]) -> None:
 
 
 def learned_winner_counts(history: Optional[list[dict]] = None) -> dict[str, int]:
-    """Count recent prior-day +18% winners by symbol for adaptive scan ranking."""
+    """Count recent winners matching the active take-profit target."""
     entries = _load_history() if history is None else history
     counts: dict[str, int] = {}
     for entry in entries[-config.OPTIMIZER_HISTORY_DAYS:]:
+        try:
+            if float(entry.get("winner_target_pct")) != config.TAKE_PROFIT_PCT:
+                continue
+        except (TypeError, ValueError):
+            continue
         winners = entry.get("winner_symbols", [])
         if not isinstance(winners, list):
             continue
@@ -897,6 +902,7 @@ def optimize_daily(exchange, symbols: list[str], now: datetime) -> bool:
         "pnl_net": best_res.get("pnl_net"),
         "profit_factor": best_res.get("profit_factor"),
         "max_drawdown_usdc": best_res.get("max_drawdown_usdc"),
+        "winner_target_pct": config.TAKE_PROFIT_PCT,
         "previous_day_winners": [
             trade["symbol"]
             for trade in best_res.get("trades", [])
@@ -912,6 +918,7 @@ def optimize_daily(exchange, symbols: list[str], now: datetime) -> bool:
         "profit_factor": best_res.get("profit_factor"),
         "max_drawdown_usdc": best_res.get("max_drawdown_usdc"),
         "trades": [t["symbol"] for t in best_res.get("trades", [])],
+        "winner_target_pct": config.TAKE_PROFIT_PCT,
         "winner_symbols": [
             trade["symbol"]
             for trade in best_res.get("trades", [])

@@ -11,7 +11,7 @@ Binance Global blocheaza IP-urile cloud GitHub Actions (451). Pentru a scana toa
 
 ## Pasul 2 - Workflow
 
-Workflow-ul `.github/workflows/scan.yml` ruleaza deja cu `runs-on: self-hosted`. Cand runner-ul e online, scanul complet ruleaza la fiecare 15 minute.
+Workflow-ul `.github/workflows/scan.yml` ruleaza deja cu `runs-on: self-hosted`. Cand runner-ul e online, scanul complet ruleaza la fiecare 10 minute.
 
 ## Verificare
 

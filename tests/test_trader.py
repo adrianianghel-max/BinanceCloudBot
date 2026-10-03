@@ -48,7 +48,7 @@ class TestPosition(unittest.TestCase):
         )
 
     def test_take_profit(self):
-        reason = self.pos.evaluate(118.0)  # >= +18%
+        reason = self.pos.evaluate(108.0)  # >= +8%
         self.assertEqual(reason, "take_profit")
 
     def test_stop_loss(self):
@@ -161,12 +161,12 @@ class TestBacktester(unittest.TestCase):
     def test_simulate_day_tp(self):
         candles = _make_candles([
             (100, 100, 100, 100),
-            (100, 120, 96, 119),   # TP +18% atins => take_profit
+            (100, 110, 96, 109),   # TP +8% atins => take_profit
             (115, 115, 115, 115),
         ])
         result = Backtester.simulate_day(candles, baseline_params())
         self.assertEqual(result["exit_reason"], "take_profit")
-        self.assertAlmostEqual(result["exit_price"], 118.0, places=6)
+        self.assertAlmostEqual(result["exit_price"], 108.0, places=6)
         self.assertGreater(result["net_pnl"], 0)
 
     def test_simulate_day_sl(self):
@@ -193,9 +193,11 @@ class TestBacktester(unittest.TestCase):
 class TestParameterOptimizer(unittest.TestCase):
     def test_learned_winner_counts_count_each_symbol_once_per_day(self):
         history = [
-            {"winner_symbols": ["A/USDC", "A/USDC", "B/USDC"]},
-            {"winner_symbols": ["A/USDC", "C/USDC"]},
-            {"winner_symbols": "invalid"},
+            {"winner_target_pct": config.TAKE_PROFIT_PCT, "winner_symbols": ["A/USDC", "A/USDC", "B/USDC"]},
+            {"winner_target_pct": config.TAKE_PROFIT_PCT, "winner_symbols": ["A/USDC", "C/USDC"]},
+            {"winner_target_pct": 0.18, "winner_symbols": ["OLD/USDC"]},
+            {"winner_symbols": ["LEGACY/USDC"]},
+            {"winner_target_pct": config.TAKE_PROFIT_PCT, "winner_symbols": "invalid"},
         ]
         self.assertEqual(
             learned_winner_counts(history),

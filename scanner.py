@@ -402,7 +402,11 @@ def main() -> int:
     except Exception as exc:  # pylint: disable=broad-except
         logger.exception("Recalibrare zilnică eșuată: %s", exc)
     winner_counts = learned_winner_counts()
-    logger.info("Recent +18%% winner symbols learned: %s", winner_counts)
+    logger.info(
+        "Recent +%s%% winner symbols learned: %s",
+        config.TAKE_PROFIT_PCT * 100,
+        winner_counts,
+    )
 
     counters = {
         "TOTAL_SYMBOLS": len(symbols),

@@ -172,7 +172,7 @@ POSITION_SIZE_USDC = 50.0       # 50 USDC per poziție
 TOTAL_CAPITAL_USDC = 100.0      # 2 × 50 USDC
 
 # Exit strategy (SIMULATED — paper trading)
-TAKE_PROFIT_PCT = 0.18          # TP: +18% față de prețul de cumpărare
+TAKE_PROFIT_PCT = 0.08          # TP: +8% față de prețul de cumpărare
 STOP_LOSS_PCT = 0.08            # SL: -8% față de prețul de cumpărare
 TRAILING_ENABLED = True         # Trailing stop activ
 TRAILING_ARM_PCT = 0.05         # se armează după ce profitul atinge +5%
