@@ -1,10 +1,10 @@
 ﻿{
   "top_symbols": [
-    "VIRTUAL/USDC",
     "CC/USDC",
-    "DOGE/USDC",
+    "PEAQ/USDC",
+    "BTC/USDC",
     "BNB/USDC",
-    "PEAQ/USDC"
+    "VET/USDC"
   ],
-  "updated_at": "2026-10-04T17:49:11.125538+00:00"
+  "updated_at": "2026-10-04T20:49:57.320175+00:00"
 }
