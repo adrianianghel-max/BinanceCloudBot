@@ -1,10 +1,10 @@
 ﻿{
   "top_symbols": [
-    "CC/USDC",
     "ADA/USDC",
     "SOL/USDC",
-    "SHIB/USDC",
-    "ALGO/USDC"
+    "PEAQ/USDC",
+    "PENGU/USDC",
+    "BTC/USDC"
   ],
-  "updated_at": "2026-10-04T23:50:03.589720+00:00"
+  "updated_at": "2026-10-05T03:41:35.196747+00:00"
 }
