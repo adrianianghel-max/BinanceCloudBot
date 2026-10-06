@@ -706,8 +706,8 @@ class Backtester:
 
 class ParameterOptimizer:
     """Generează combinații de parametri, le evaluează pe backtest și alege
-    cea mai bună (profit net), cu tie-break Profit Factor / drawdown, blend-uit
-    cu performanța medie a combinației din ultimele 3-5 zile (anti-overfitting)."""
+    cea mai bună după rata TP +8% (cu eșantion minim când există), apoi TP-uri,
+    PNL blend-uit, Profit Factor și drawdown."""
 
     def __init__(self, backtester: Backtester = None) -> None:
         self.backtester = backtester

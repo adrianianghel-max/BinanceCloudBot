@@ -293,7 +293,7 @@ class TestParameterOptimizer(unittest.TestCase):
             self.assertEqual(config.NEAR_BREAKOUT_MAX_DISTANCE_PCT, 8.0)
             self.assertEqual(config.VOLUME_RATIO_THRESHOLD, 0.6)
             self.assertEqual(config.MIN_EMA10_SLOPE_PCT, 0.05)
-            self.assertEqual((config.RSI_MIN, config.RSI_MAX), (50.0, 70.0))
+            self.assertEqual((config.RSI_MIN, config.RSI_MAX), (50.0, 75.0))
             self.assertEqual(config.ADX_MIN, 30.0)
         finally:
             apply_params_to_config(original)
