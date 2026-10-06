@@ -1,10 +1,10 @@
 ﻿{
   "top_symbols": [
-    "AVAX/USDC",
-    "TON/USDC",
+    "USD1/USDC",
+    "XDC/USDC",
+    "USDG/USDC",
     "XRP/USDC",
-    "S/USDC",
-    "DOGE/USDC"
+    "CC/USDC"
   ],
-  "updated_at": "2026-10-06T14:14:00.108348+00:00"
+  "updated_at": "2026-10-06T19:34:11.850031+00:00"
 }

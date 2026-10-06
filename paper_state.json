@@ -1,21 +1,5 @@
 ﻿{
   "positions": {
-    "XDC/USDC": {
-      "symbol": "XDC/USDC",
-      "entry_price": 0.02963,
-      "size_usdc": 50.0,
-      "quantity": 1687.4789065136686,
-      "entry_time": "2026-09-08T02:38:26.603444+00:00",
-      "peak_price": 0.03394,
-      "trailing_armed": true,
-      "trailing_stop": 0.032921799999999994,
-      "tp_pct": 0.15,
-      "sl_pct": 0.08,
-      "status": "open",
-      "exit_price": null,
-      "exit_time": null,
-      "exit_reason": null
-    },
     "S/USDC": {
       "symbol": "S/USDC",
       "entry_price": 0.0439,
@@ -108,6 +92,21 @@
       "exit_reason": "trailing_stop",
       "entry_time": "2026-09-09T09:13:07.683897+00:00",
       "exit_time": "2026-10-06T07:06:35.622904+00:00"
+    },
+    {
+      "symbol": "XDC/USDC",
+      "entry_price": 0.02963,
+      "exit_price": 0.03452,
+      "quantity": 1687.4789065136686,
+      "amount_usdc": 50.0,
+      "gross_pnl": 8.251771852851846,
+      "buy_fee": 0.05,
+      "sell_fee": 0.058251771852851846,
+      "total_fees": 0.10825177185285184,
+      "net_pnl": 8.143520080998993,
+      "exit_reason": "take_profit",
+      "entry_time": "2026-09-08T02:38:26.603444+00:00",
+      "exit_time": "2026-10-06T19:31:04.832399+00:00"
     }
   ],
   "last_close_by_symbol": {
@@ -115,7 +114,8 @@
     "LTC/USDC": "2026-09-07T13:37:25.166142+00:00",
     "PEAQ/USDC": "2026-09-07T18:23:47.557068+00:00",
     "ATOM/USDC": "2026-09-09T09:13:07.683897+00:00",
-    "CRO/USDC": "2026-10-06T07:06:35.622904+00:00"
+    "CRO/USDC": "2026-10-06T07:06:35.622904+00:00",
+    "XDC/USDC": "2026-10-06T19:31:04.832399+00:00"
   },
   "pause_entries_until": null
 }
