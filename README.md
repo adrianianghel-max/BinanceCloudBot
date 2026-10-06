@@ -45,9 +45,9 @@ with Telegram alerts, daily backtest/recalibration ("smart trader") and daily re
 - Backtest limitat la `BACKTEST_SYMBOLS_LIMIT` (25 by default) → se încadrează în 5 minute
   în GitHub Actions
 - Rata TP din acest backtest este orientativă, nu o estimare live validată: intrarea
-  simulată este la deschiderea primei lumânări 1h a zilei și nu reproduce confirmarea
-  zero-cross MACD live pe 15m/1h. Eșantionul zilnic este mic; rata observată nu garantează
-  performanțe viitoare.
+  simulată este la deschiderea primei lumânări 1h a zilei și nu reproduce filtrele live de
+  acumulare sau confirmarea zero-cross MACD pe 15m/1h. Eșantionul zilnic este mic; rata
+  observată nu garantează performanțe viitoare.
 
 ### Raportare zilnică
 - `reports/daily_report_YYYY-MM-DD.json` cu:
