@@ -25,6 +25,7 @@ from indicators import (
     calculate_macd_full,
     calculate_macd_histogram_slope,
     calculate_macd_values,
+    macd_crossed_above_zero,
     calculate_obv,
     calculate_obv_rising,
     calculate_overextension,
@@ -182,6 +183,27 @@ class TestADX(unittest.TestCase):
 
 
 class TestMACD(unittest.TestCase):
+    @patch(
+        "indicators.ta.macd",
+        return_value=pd.DataFrame({"MACD_12_26_9": [-0.2, 0.1]}),
+    )
+    def test_macd_zero_cross_from_negative_to_positive(self, _macd):
+        self.assertTrue(macd_crossed_above_zero(pd.DataFrame({"close": [1.0, 2.0]})))
+
+    @patch(
+        "indicators.ta.macd",
+        return_value=pd.DataFrame({"MACD_12_26_9": [0.1, 0.2]}),
+    )
+    def test_macd_zero_cross_requires_current_cross(self, _macd):
+        self.assertFalse(macd_crossed_above_zero(pd.DataFrame({"close": [1.0, 2.0]})))
+
+    @patch(
+        "indicators.ta.macd",
+        return_value=pd.DataFrame({"MACD_12_26_9": [-0.1, np.nan]}),
+    )
+    def test_macd_zero_cross_rejects_missing_latest_value(self, _macd):
+        self.assertFalse(macd_crossed_above_zero(pd.DataFrame({"close": [1.0, 2.0]})))
+
     def test_macd_values(self):
         df = _make_synthetic_df(n=100)
         macd_line, signal_line = calculate_macd_values(df)

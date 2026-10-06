@@ -155,6 +155,35 @@ def calculate_macd_values(df: pd.DataFrame) -> tuple[Optional[float], Optional[f
     return float(macd_line), float(signal_line)
 
 
+def macd_crossed_above_zero(df: pd.DataFrame) -> bool:
+    """Return whether the MACD line crossed from below zero on the latest closed candle."""
+    if df is None or len(df) < 2:
+        return False
+
+    macd_df = ta.macd(
+        df["close"],
+        fast=12,
+        slow=26,
+        signal=9,
+    )
+    if macd_df is None or macd_df.empty:
+        return False
+
+    line_col = [
+        column for column in macd_df.columns
+        if column.startswith("MACD_") and not column.startswith("MACDh_")
+    ]
+    if not line_col:
+        return False
+
+    values = macd_df[line_col[0]].iloc[-2:]
+    if len(values) < 2 or values.isna().any():
+        return False
+
+    previous, current = values.iloc[0], values.iloc[1]
+    return bool(previous < 0 < current)
+
+
 def calculate_macd_full(df: pd.DataFrame) -> dict[str, Optional[float]]:
     """Returns MACD line, signal, histogram, and fast-component slope."""
     macd_df = ta.macd(df["close"], fast=12, slow=26, signal=9)

@@ -13,9 +13,10 @@ with Telegram alerts, daily backtest/recalibration ("smart trader") and daily re
 - Excludes leveraged tokens ending with: `UP`, `DOWN`, `BULL`, `BEAR`
 - Detects accumulation (Bollinger squeeze, supported volume, limited drift) on 1D/4H/1H
   and reports the number of matching timeframes per symbol.
-- Fetches 15m/5m candles for accumulated symbols; a closed-candle breakout with
-  above-average volume on either timeframe confirms the entry.
-- Retains daily trend, 4H MACD/volume/breakout/ADX, and 1H RSI/volume filters.
+- For accumulated symbols, requires the MACD line to cross from negative to positive
+  on closed 15m and 1h candles at the same time.
+- Keeps daily trend and all existing 4H MACD/volume/breakout/ADX filters, as well as
+  existing 1H RSI/volume checks.
 - Ranks candidates using the growth score plus a capped bonus learned from symbols
   that reached the take-profit in recent daily backtests.
 - Displays accumulation and breakout-confirmation details in Top-5 Telegram alerts.

@@ -17,10 +17,10 @@ from indicators import (
     calculate_macd_values,
     calculate_rsi_pair,
     calculate_volume_ratio,
-    confirm_breakout,
     detect_accumulation,
     is_daily_bullish,
     is_daily_early_trend,
+    macd_crossed_above_zero,
     prepare_ohlcv_df,
 )
 from market_data import is_data_fresh
@@ -186,33 +186,21 @@ def analyze_symbol(
             max_price_change_pct=config.ACCUMULATION_MAX_PRICE_CHANGE_PCT,
         )
     ]
-    breakout_15m_ok = False
-    breakout_5m_ok = False
+    macd_cross_15m = False
     if accumulation_timeframes:
-        for timeframe, limit, result_key in (
-            ("15m", config.H15_LIMIT, "15m"),
-            ("5m", config.M5_LIMIT, "5m"),
-        ):
-            try:
-                raw = with_retries(exchange.fetch_ohlcv, symbol, timeframe, limit=limit)
-                if raw:
-                    frame = prepare_ohlcv_df(raw)
-                    if not is_data_fresh(frame, timeframe):
-                        logger.warning("Stale %s data for %s; breakout not confirmed.", timeframe, symbol)
-                        continue
-                    frame = _closed_candles(frame, timeframe, now)
-                    confirmed = confirm_breakout(
-                        frame,
-                        lookback=config.LOW_TIMEFRAME_BREAKOUT_LOOKBACK,
-                        volume_ratio_min=config.LOW_TIMEFRAME_BREAKOUT_VOLUME_RATIO,
-                    )
-                    if result_key == "15m":
-                        breakout_15m_ok = confirmed
-                    else:
-                        breakout_5m_ok = confirmed
-            except ccxt.BaseError as exc:
-                logger.warning("Could not check %s breakout for %s: %s", timeframe, symbol, exc)
-    explosion_confirmed = breakout_15m_ok or breakout_5m_ok
+        try:
+            raw = with_retries(exchange.fetch_ohlcv, symbol, "15m", limit=config.H15_LIMIT)
+            if raw:
+                frame = prepare_ohlcv_df(raw)
+                if is_data_fresh(frame, "15m"):
+                    frame = _closed_candles(frame, "15m", now)
+                    macd_cross_15m = macd_crossed_above_zero(frame)
+                else:
+                    logger.warning("Stale 15m data for %s; MACD cross not confirmed.", symbol)
+        except ccxt.BaseError as exc:
+            logger.warning("Could not check 15m MACD for %s: %s", symbol, exc)
+    macd_cross_1h = macd_crossed_above_zero(h1_df) if h1_df is not None else False
+    trend_start_confirmed = macd_cross_15m and macd_cross_1h
     winner_days = winner_counts.get(symbol, 0)
 
     daily_strict_ok = is_daily_bullish(daily_df)
@@ -288,7 +276,7 @@ def analyze_symbol(
         and adx_ok
         and rsi_ok
         and bool(accumulation_timeframes)
-        and explosion_confirmed
+        and trend_start_confirmed
     )
     price = None
     if qualified:
@@ -309,9 +297,9 @@ def analyze_symbol(
         "growth_score": score,
         "accumulation_count": len(accumulation_timeframes),
         "accumulation_timeframes": accumulation_timeframes,
-        "breakout_15m_ok": breakout_15m_ok,
-        "breakout_5m_ok": breakout_5m_ok,
-        "explosion_confirmed": explosion_confirmed,
+        "macd_cross_15m": macd_cross_15m,
+        "macd_cross_1h": macd_cross_1h,
+        "trend_start_confirmed": trend_start_confirmed,
         "winner_days": winner_days,
         "daily_ok": daily_ok,
         "ema_slope_ok": ema_slope_ok,
@@ -335,7 +323,7 @@ def print_console_table(rows: list[dict[str, Any]]) -> None:
 
     header = (
         "| Symbol | Price | RSI | MACD | EMA10 Slope | Vol Ratio | "
-        "Dist Breakout % | Accumulations | Explosion | Growth Score |"
+        "Dist Breakout % | Accumulations | MACD 15m/1h | Growth Score |"
     )
     separator = "|---|---:|---|---:|---:|---|---:|---:|---|---:|"
 
@@ -351,7 +339,7 @@ def print_console_table(rows: list[dict[str, Any]]) -> None:
             f"| {row.get('symbol', 'N/A')} | {price} | {row.get('rsi_1h', 'N/A')} | "
             f"{row.get('macd', 'N/A')} | {ema10_slope} | {vol4h} | "
             f"{dist_breakout} | {row.get('accumulation_count', 0)} | "
-            f"{'YES' if row.get('explosion_confirmed') else 'NO'} | {growth_score} |"
+            f"{'YES' if row.get('trend_start_confirmed') else 'NO'} | {growth_score} |"
         )
 
 
@@ -360,7 +348,7 @@ def print_top20_by_score(rows: list[dict[str, Any]]) -> None:
         logger.info("No rows available for TOP 20 score diagnostic.")
         return
 
-    header = "Symbol | Score | Accumulation | Explosion | Winner Days | RSI | EMA10 Slope | Volume Ratio | Distance To Breakout"
+    header = "Symbol | Score | Accumulation | MACD 15m/1h | Winner Days | RSI | EMA10 Slope | Volume Ratio | Distance To Breakout"
     separator = "-" * len(header)
     print(header)
     print(separator)
@@ -369,9 +357,8 @@ def print_top20_by_score(rows: list[dict[str, Any]]) -> None:
             f"{row.get('symbol', 'N/A')} | "
             f"{_format_float(row.get('growth_score'), 2)} | "
             f"{row.get('accumulation_count', 0)}/3 | "
-            f"{'15m' if row.get('breakout_15m_ok') else ''}"
-            f"{'+' if row.get('breakout_15m_ok') and row.get('breakout_5m_ok') else ''}"
-            f"{'5m' if row.get('breakout_5m_ok') else ('N/A' if not row.get('explosion_confirmed') else '')} | "
+            f"{'YES' if row.get('macd_cross_15m') else 'NO'}/"
+            f"{'YES' if row.get('macd_cross_1h') else 'NO'} | "
             f"{row.get('winner_days', 0)} | "
             f"{row.get('rsi_1h', 'N/A')} | "
             f"{_format_float(row.get('ema10_slope'), 3)} | "
@@ -419,7 +406,7 @@ def main() -> int:
         "AFTER_ADX_FILTER": 0,
         "AFTER_BREAKOUT_FILTER": 0,
         "AFTER_ACCUMULATION_FILTER": 0,
-        "AFTER_EXPLOSION_CONFIRMATION": 0,
+        "AFTER_MACD_ZERO_CROSS": 0,
         "AFTER_SCORING_FILTER": 0,
         "FINAL_QUALIFIED": 0,
     }
@@ -438,11 +425,12 @@ def main() -> int:
                 skipped_due_to_error += 1
                 continue
             logger.info(
-                "%s accumulation=%d/3 (%s), breakout_confirmed=%s",
+                "%s accumulation=%d/3 (%s), MACD zero cross 15m=%s 1h=%s",
                 symbol,
                 diagnostic.get("accumulation_count", 0),
                 ",".join(diagnostic.get("accumulation_timeframes", [])) or "none",
-                diagnostic.get("explosion_confirmed", False),
+                diagnostic.get("macd_cross_15m", False),
+                diagnostic.get("macd_cross_1h", False),
             )
 
             if diagnostic.get("growth_score") is not None:
@@ -480,9 +468,9 @@ def main() -> int:
                 continue
             counters["AFTER_ACCUMULATION_FILTER"] += 1
 
-            if not diagnostic.get("explosion_confirmed", False):
+            if not diagnostic.get("trend_start_confirmed", False):
                 continue
-            counters["AFTER_EXPLOSION_CONFIRMATION"] += 1
+            counters["AFTER_MACD_ZERO_CROSS"] += 1
 
             if diagnostic.get("growth_score") is None:
                 continue
