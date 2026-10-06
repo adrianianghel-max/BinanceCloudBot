@@ -6,9 +6,9 @@
       "size_usdc": 50.0,
       "quantity": 1687.4789065136686,
       "entry_time": "2026-09-08T02:38:26.603444+00:00",
-      "peak_price": 0.03318,
+      "peak_price": 0.03394,
       "trailing_armed": true,
-      "trailing_stop": 0.0321846,
+      "trailing_stop": 0.032921799999999994,
       "tp_pct": 0.15,
       "sl_pct": 0.08,
       "status": "open",
@@ -16,15 +16,15 @@
       "exit_time": null,
       "exit_reason": null
     },
-    "CRO/USDC": {
-      "symbol": "CRO/USDC",
-      "entry_price": 0.06111,
+    "S/USDC": {
+      "symbol": "S/USDC",
+      "entry_price": 0.0439,
       "size_usdc": 50.0,
-      "quantity": 818.1966944853543,
-      "entry_time": "2026-09-09T09:13:07.683897+00:00",
-      "peak_price": 0.06995,
-      "trailing_armed": true,
-      "trailing_stop": 0.0678515,
+      "quantity": 1138.9521640091116,
+      "entry_time": "2026-10-06T07:06:35.622904+00:00",
+      "peak_price": 0.0439,
+      "trailing_armed": false,
+      "trailing_stop": 0.0,
       "tp_pct": 0.15,
       "sl_pct": 0.08,
       "status": "open",
@@ -93,13 +93,29 @@
       "exit_reason": "take_profit",
       "entry_time": "2026-09-07T13:37:25.166142+00:00",
       "exit_time": "2026-09-09T09:13:07.683897+00:00"
+    },
+    {
+      "symbol": "CRO/USDC",
+      "entry_price": 0.06111,
+      "exit_price": 0.06745,
+      "quantity": 818.1966944853543,
+      "amount_usdc": 50.0,
+      "gross_pnl": 5.187367043037149,
+      "buy_fee": 0.05,
+      "sell_fee": 0.05518736704303715,
+      "total_fees": 0.10518736704303716,
+      "net_pnl": 5.082179675994112,
+      "exit_reason": "trailing_stop",
+      "entry_time": "2026-09-09T09:13:07.683897+00:00",
+      "exit_time": "2026-10-06T07:06:35.622904+00:00"
     }
   ],
   "last_close_by_symbol": {
     "XRP/USDC": "2026-09-04T14:27:30.580373+00:00",
     "LTC/USDC": "2026-09-07T13:37:25.166142+00:00",
     "PEAQ/USDC": "2026-09-07T18:23:47.557068+00:00",
-    "ATOM/USDC": "2026-09-09T09:13:07.683897+00:00"
+    "ATOM/USDC": "2026-09-09T09:13:07.683897+00:00",
+    "CRO/USDC": "2026-10-06T07:06:35.622904+00:00"
   },
   "pause_entries_until": null
 }

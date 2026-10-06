@@ -1,0 +1,115 @@
+﻿{
+  "date": "2026-10-06",
+  "generated_at": "2026-10-06T07:06:35.622904+00:00",
+  "net_profit_usdc": 5.0822,
+  "net_profit_pct": 5.0822,
+  "total_fees_usdc": 0.1052,
+  "trades": [
+    {
+      "symbol": "CRO/USDC",
+      "entry_price": 0.06111,
+      "exit_price": 0.06745,
+      "quantity": 818.1966944853543,
+      "amount_usdc": 50.0,
+      "gross_pnl": 5.187367043037149,
+      "buy_fee": 0.05,
+      "sell_fee": 0.05518736704303715,
+      "total_fees": 0.10518736704303716,
+      "net_pnl": 5.082179675994112,
+      "exit_reason": "trailing_stop",
+      "entry_time": "2026-09-09T09:13:07.683897+00:00",
+      "exit_time": "2026-10-06T07:06:35.622904+00:00"
+    }
+  ],
+  "params_used": {
+    "TP_PCT": 0.15,
+    "SL_PCT": 0.08,
+    "TRAILING_ARM_PCT": 0.05,
+    "TRAILING_STEP_PCT": 0.03,
+    "FEE_RATE": 0.001,
+    "NEAR_BREAKOUT_MAX_DISTANCE_PCT": 20.0,
+    "VOLUME_RATIO_THRESHOLD": 1.2,
+    "MIN_EMA10_SLOPE_PCT": 0.2,
+    "RSI_MIN": 50.0,
+    "RSI_MAX": 85.0,
+    "ADX_MIN": 30.0
+  },
+  "last_7d": {
+    "dates": [
+      "2026-09-06",
+      "2026-09-07",
+      "2026-09-08",
+      "2026-10-02",
+      "2026-10-03",
+      "2026-10-04",
+      "2026-10-05"
+    ],
+    "pnl_list": [
+      2.0792,
+      0.8394,
+      6.8227,
+      1.3616,
+      3.3238,
+      0.683,
+      0.0
+    ],
+    "total_profit": 15.1097,
+    "avg_daily": 2.1585,
+    "std_daily": 2.1491
+  },
+  "top5_ranking": [
+    {
+      "symbol": "TON/USDC",
+      "growth_score": 90.61,
+      "rsi_1h": "61.00",
+      "vol4h": 2.862805161101635,
+      "dist_breakout_pct": 0.5825242718446679
+    },
+    {
+      "symbol": "AVAX/USDC",
+      "growth_score": 88.71,
+      "rsi_1h": "64.83",
+      "vol4h": 2.7857028809972473,
+      "dist_breakout_pct": 1.4133333333333395
+    },
+    {
+      "symbol": "S/USDC",
+      "growth_score": 77.87,
+      "rsi_1h": "59.87",
+      "vol4h": 3.904508644591437,
+      "dist_breakout_pct": 9.567198177676527
+    },
+    {
+      "symbol": "XDC/USDC",
+      "growth_score": 65.77,
+      "rsi_1h": "66.08",
+      "vol4h": 0.8291668782535191,
+      "dist_breakout_pct": 1.149086623453157
+    },
+    {
+      "symbol": "USDQ/USDC",
+      "growth_score": 62.09,
+      "rsi_1h": "0.00",
+      "vol4h": 0.0,
+      "dist_breakout_pct": 0.5826803295157864
+    }
+  ],
+  "open_positions_end": {
+    "XDC/USDC": {
+      "symbol": "XDC/USDC",
+      "entry_price": 0.02963,
+      "size_usdc": 50.0,
+      "quantity": 1687.4789065136686,
+      "entry_time": "2026-09-08T02:38:26.603444+00:00",
+      "peak_price": 0.03394,
+      "trailing_armed": true,
+      "trailing_stop": 0.032921799999999994,
+      "tp_pct": 0.15,
+      "sl_pct": 0.08,
+      "status": "open",
+      "exit_price": null,
+      "exit_time": null,
+      "exit_reason": null
+    }
+  }
+}
