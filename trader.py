@@ -559,6 +559,8 @@ class Backtester:
             return False
         if feats["rsi"] is None or not (params["RSI_MIN"] <= feats["rsi"] <= params["RSI_MAX"]):
             return False
+        if not feats["rsi_rising"] or not feats["vol_up"]:
+            return False
         return True
 
     def growth_score_for(self, feats: dict[str, Any]) -> Optional[float]:
@@ -802,9 +804,16 @@ class ParameterOptimizer:
         Prioritizează rata TP observată, apoi numărul de TP-uri și PNL-ul blend-uit;
         profit factor și drawdown sunt criterii de departajare.
         """
+        eligible_results = {
+            key: res for key, res in results.items()
+            if int(res.get("trade_count", 0)) >= 3
+        }
+        if not eligible_results:
+            eligible_results = results
+
         best_key = None
         best_rank = None
-        for key, res in results.items():
+        for key, res in eligible_results.items():
             backtest_pnl = float(res.get("pnl_net", 0.0))
             combo = res.get("params", {})
             history_pnl = self._history_pnl_for(combo, history, current_day)

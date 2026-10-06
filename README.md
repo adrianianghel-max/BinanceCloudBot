@@ -16,7 +16,7 @@ with Telegram alerts, daily backtest/recalibration ("smart trader") and daily re
 - For accumulated symbols, requires the MACD line to cross from negative to positive
   on closed 15m and 1h candles at the same time.
 - Keeps daily trend and all existing 4H MACD/volume/breakout/ADX filters, as well as
-  existing 1H RSI/volume checks.
+  existing 1H RSI/volume checks; 1H RSI and volume must also be rising.
 - Ranks candidates using the growth score plus a capped bonus learned from symbols
   that reached the take-profit in recent daily backtests.
 - Displays accumulation and MACD zero-cross details in Top-5 Telegram alerts.
@@ -32,19 +32,22 @@ with Telegram alerts, daily backtest/recalibration ("smart trader") and daily re
 
 ### Backtest zilnic + recalibrare ("smart trader")
 - La prima rulare a zilei, botul reia **ziua anterioară** cu date reale (OHLCV 1h/4h/1d)
-- Testează variații pentru:
-  - `NEAR_BREAKOUT_MAX_DISTANCE_PCT` (1.5%–5.0%)
-  - `VOLUME_RATIO_THRESHOLD` (1.0–2.0)
-  - `MIN_EMA10_SLOPE_PCT` (0.0–0.3)
-  - `RSI_MIN/RSI_MAX` (50-70, 55-75, 55-80, 60-85)
-  - `ADX_MIN` (15–30)
-- Alege combinația cu cel mai mare **profit net** (tie-break: Profit Factor, apoi drawdown)
+- Testează `NEAR_BREAKOUT_MAX_DISTANCE_PCT` (3/5/8%), `VOLUME_RATIO_THRESHOLD`
+  (0.6–1.2), `MIN_EMA10_SLOPE_PCT` (0.05–0.2), `RSI_MIN/RSI_MAX`
+  (50-70, 50-75, 55-70, 55-75) și `ADX_MIN` (20–30).
+- Când există suficiente date, exclude combinațiile cu mai puțin de 3 tranzacții,
+  apoi prioritizează rata de atingere TP +8%, numărul de TP-uri, PNL-ul blend-uit,
+  Profit Factor și drawdown. Dacă niciuna nu are 3 tranzacții, compară toate combinațiile.
 - **Medie ponderată** cu performanța din ultimele 3–5 zile (`strategy_history.json`)
 - **Explorare săptămânală** cu combinații aleatorii (anti-stagnare / descoperire regim nou)
 - Învață din simbolurile care au atins TP-ul de +8% în backtestul zilei precedente;
   istoricul recent al câștigătorilor contribuie gradual la ranking.
 - Backtest limitat la `BACKTEST_SYMBOLS_LIMIT` (25 by default) → se încadrează în 5 minute
   în GitHub Actions
+- Rata TP din acest backtest este orientativă, nu o estimare live validată: intrarea
+  simulată este la deschiderea primei lumânări 1h a zilei și nu reproduce confirmarea
+  zero-cross MACD live pe 15m/1h. Eșantionul zilnic este mic; rata observată nu garantează
+  performanțe viitoare.
 
 ### Raportare zilnică
 - `reports/daily_report_YYYY-MM-DD.json` cu:

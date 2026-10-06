@@ -14,6 +14,7 @@ from trader import (
     ParameterOptimizer,
     Portfolio,
     Position,
+    apply_params_to_config,
     baseline_params,
     learned_winner_counts,
     params_key,
@@ -139,6 +140,23 @@ class TestBacktester(unittest.TestCase):
         params2 = dict(params, VOLUME_RATIO_THRESHOLD=1.2)
         self.assertFalse(Backtester.qualifies(f2, params2))
 
+    def test_qualifies_requires_rising_rsi_and_volume(self):
+        feats = {
+            "daily_ok": True,
+            "ema10_slope": 0.1,
+            "macd_ok": True,
+            "volume_ratio": 1.5,
+            "distance": 2.0,
+            "adx": 25.0,
+            "rsi": 60.0,
+            "rsi_rising": True,
+            "vol_up": True,
+        }
+        params = baseline_params()
+        self.assertTrue(Backtester.qualifies(feats, params))
+        self.assertFalse(Backtester.qualifies(dict(feats, rsi_rising=False), params))
+        self.assertFalse(Backtester.qualifies(dict(feats, vol_up=False), params))
+
     def test_qualifies_respects_custom_params(self):
         feats = {
             "daily_ok": True,
@@ -238,6 +256,47 @@ class TestParameterOptimizer(unittest.TestCase):
         }
         best = optimizer.select_best(results, [], datetime(2026, 1, 5, tzinfo=timezone.utc))
         self.assertEqual(best["RSI_MIN"], 56.0)
+
+    def test_select_best_prefers_tp_rate_with_minimum_sample(self):
+        optimizer = ParameterOptimizer()
+        high_pnl = dict(baseline_params())
+        high_tp_rate = dict(high_pnl, VOLUME_RATIO_THRESHOLD=1.0)
+        too_few_trades = dict(high_pnl, VOLUME_RATIO_THRESHOLD=1.2)
+        results = {
+            params_key(high_pnl): {
+                "pnl_net": 100.0, "profit_factor": 5.0, "max_drawdown_usdc": -1.0,
+                "tp_rate": 0.5, "tp_hits": 2, "trade_count": 4, "params": high_pnl,
+            },
+            params_key(high_tp_rate): {
+                "pnl_net": -1.0, "profit_factor": 0.5, "max_drawdown_usdc": -5.0,
+                "tp_rate": 0.75, "tp_hits": 3, "trade_count": 4, "params": high_tp_rate,
+            },
+            params_key(too_few_trades): {
+                "pnl_net": 10.0, "profit_factor": 2.0, "max_drawdown_usdc": -1.0,
+                "tp_rate": 1.0, "tp_hits": 1, "trade_count": 1, "params": too_few_trades,
+            },
+        }
+        best = optimizer.select_best(results, [], datetime(2026, 1, 5, tzinfo=timezone.utc))
+        self.assertEqual(best["VOLUME_RATIO_THRESHOLD"], 1.0)
+
+    def test_apply_params_constrains_stale_saved_values(self):
+        original = baseline_params()
+        try:
+            apply_params_to_config({
+                "NEAR_BREAKOUT_MAX_DISTANCE_PCT": 100.0,
+                "VOLUME_RATIO_THRESHOLD": 0.4,
+                "MIN_EMA10_SLOPE_PCT": 0.0,
+                "RSI_MIN": 45.0,
+                "RSI_MAX": 85.0,
+                "ADX_MIN": 40.0,
+            })
+            self.assertEqual(config.NEAR_BREAKOUT_MAX_DISTANCE_PCT, 8.0)
+            self.assertEqual(config.VOLUME_RATIO_THRESHOLD, 0.6)
+            self.assertEqual(config.MIN_EMA10_SLOPE_PCT, 0.05)
+            self.assertEqual((config.RSI_MIN, config.RSI_MAX), (50.0, 70.0))
+            self.assertEqual(config.ADX_MIN, 30.0)
+        finally:
+            apply_params_to_config(original)
 
     def test_history_blend_uses_previous_days(self):
         optimizer = ParameterOptimizer()
