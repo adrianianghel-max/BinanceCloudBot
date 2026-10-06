@@ -19,7 +19,7 @@ with Telegram alerts, daily backtest/recalibration ("smart trader") and daily re
   existing 1H RSI/volume checks.
 - Ranks candidates using the growth score plus a capped bonus learned from symbols
   that reached the take-profit in recent daily backtests.
-- Displays accumulation and breakout-confirmation details in Top-5 Telegram alerts.
+- Displays accumulation and MACD zero-cross details in Top-5 Telegram alerts.
 
 ### Trading PAPER (modulul `trader.py`)
 - Selectează **top-2 simboluri calificate după growth_score** (max 2 poziții simultane)
