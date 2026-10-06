@@ -268,16 +268,19 @@ def analyze_symbol(
             score + min(winner_days * config.WINNER_SCORE_BONUS, config.WINNER_SCORE_BONUS_MAX),
         )
 
-    qualified = (
-        daily_ok
-        and macd_ok
-        and volume_ok
-        and near_breakout_ok
-        and adx_ok
-        and rsi_ok
-        and bool(accumulation_timeframes)
-        and trend_start_confirmed
-    )
+    qualified = all((
+        daily_ok,
+        ema_slope_ok,
+        macd_ok,
+        volume_ok,
+        near_breakout_ok,
+        adx_ok,
+        rsi_ok,
+        rsi_rising_ok,
+        vol_up_ok,
+        bool(accumulation_timeframes),
+        trend_start_confirmed,
+    ))
     price = None
     if qualified:
         ticker = with_retries(exchange.fetch_ticker, symbol)

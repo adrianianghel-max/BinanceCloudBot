@@ -135,9 +135,26 @@ def params_key(params: dict[str, float]) -> str:
 
 def apply_params_to_config(params: dict[str, float]) -> None:
     """Aplică parametrii optimi pe modulul config → scannerul îi folosește imediat."""
+    ranges = config.SEARCH_RANGES
     for key in OPTIMIZABLE_KEYS:
-        if key in params:
-            setattr(config, key, float(params[key]))
+        if key in ("RSI_MIN", "RSI_MAX"):
+            continue
+        allowed = ranges[key]
+        requested = float(params.get(key, getattr(config, key)))
+        setattr(config, key, min(allowed, key=lambda value: abs(float(value) - requested)))
+
+    rsi_combos = ranges["RSI_COMBOS"]
+    requested_rsi_min = float(params.get("RSI_MIN", config.RSI_MIN))
+    requested_rsi_max = float(params.get("RSI_MAX", config.RSI_MAX))
+    safe_rsi_min, safe_rsi_max = min(
+        rsi_combos,
+        key=lambda combo: (
+            abs(float(combo[0]) - requested_rsi_min)
+            + abs(float(combo[1]) - requested_rsi_max)
+        ),
+    )
+    config.RSI_MIN = float(safe_rsi_min)
+    config.RSI_MAX = float(safe_rsi_max)
     logger.info("Parametri aplicați: rsi=%s-%s dist=%.2f%% vol=%.2fx slope=%.3f%% adx=%.1f",
                 config.RSI_MIN, config.RSI_MAX, config.NEAR_BREAKOUT_MAX_DISTANCE_PCT,
                 config.VOLUME_RATIO_THRESHOLD, config.MIN_EMA10_SLOPE_PCT, config.ADX_MIN)
@@ -665,6 +682,7 @@ class Backtester:
 
         wins = sum(t["net_pnl"] for t in trades if t["net_pnl"] > 0)
         losses = sum(t["net_pnl"] for t in trades if t["net_pnl"] < 0)
+        tp_hits = sum(t["exit_reason"] == "take_profit" for t in trades)
         profit_factor = wins / abs(losses) if abs(losses) > 1e-9 else (99.0 if wins > 0 else 0.0)
 
         return {
@@ -674,6 +692,9 @@ class Backtester:
             "trades": trades,
             "max_drawdown_usdc": max_dd,
             "profit_factor": profit_factor,
+            "tp_hits": tp_hits,
+            "trade_count": len(trades),
+            "tp_rate": tp_hits / len(trades) if trades else 0.0,
             "symbols": [t["symbol"] for t in trades],
             "params": params,
         }
@@ -778,12 +799,11 @@ class ParameterOptimizer:
     ) -> dict[str, float]:
         """Alege combinația cu cel mai bun scor blend (backtest + istoric).
 
-        Scor = W * pnl_backtest + (1-W) * pnl_medie_istoric. Tie-break: Profit Factor,
-        apoi drawdown minim.
+        Prioritizează rata TP observată, apoi numărul de TP-uri și PNL-ul blend-uit;
+        profit factor și drawdown sunt criterii de departajare.
         """
         best_key = None
-        best_score = None
-        best_tie = None
+        best_rank = None
         for key, res in results.items():
             backtest_pnl = float(res.get("pnl_net", 0.0))
             combo = res.get("params", {})
@@ -794,20 +814,28 @@ class ParameterOptimizer:
             )
             pf = float(res.get("profit_factor", 0.0))
             dd = float(res.get("max_drawdown_usdc", 0.0))
-            tie = (pf, -dd, key)  # PF cât mai mare, drawdown cât mai mic
+            tp_rate = float(res.get("tp_rate", 0.0))
+            tp_hits = int(res.get("tp_hits", 0))
+            rank = (tp_rate, tp_hits, score, pf, -dd, key)
 
-            if best_score is None or score > best_score or (score == best_score and tie > best_tie):
-                best_key, best_score, best_tie = key, score, tie
+            if best_rank is None or rank > best_rank:
+                best_key, best_rank = key, rank
 
         if best_key is None:
             logger.warning("Nicio combinație evaluată — mă întorc la baseline.")
             return baseline_params()
 
         best = results[best_key]["params"]
+        best_score = best_rank[2]
+        best_res = results[best_key]
         logger.info("Optimizer a ales scor=%.2f %s (pnl=%+.2f pf=%.2f dd=%+.2f)",
                     best_score, params_key(best),
-                    results[best_key]["pnl_net"], results[best_key]["profit_factor"],
-                    results[best_key]["max_drawdown_usdc"])
+                    best_res["pnl_net"], best_res["profit_factor"],
+                    best_res["max_drawdown_usdc"])
+        logger.info("Rata TP aleasă: %.1f%% (%s/%s trade-uri)",
+                    best_res.get("tp_rate", 0.0) * 100,
+                    best_res.get("tp_hits", 0),
+                    best_res.get("trade_count", 0))
         return best
 # ======================================================================
 #   ORCHESTRARE — fluxul zilnic integrat în scanner.py
