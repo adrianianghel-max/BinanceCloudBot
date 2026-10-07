@@ -1,10 +1,10 @@
 ﻿{
   "top_symbols": [
     "AVAX/USDC",
+    "RLUSD/USDC",
+    "SOFID/USDC",
     "BERA/USDC",
-    "VIRTUAL/USDC",
-    "CC/USDC",
-    "XDC/USDC"
+    "ADA/USDC"
   ],
-  "updated_at": "2026-10-06T23:18:03.701907+00:00"
+  "updated_at": "2026-10-07T02:30:36.523169+00:00"
 }
