@@ -1,10 +1,10 @@
 ﻿{
   "top_symbols": [
-    "XDC/USDC",
+    "APE/USDC",
+    "XTZ/USDC",
+    "MANA/USDC",
     "RLUSD/USDC",
-    "FIDD/USDC",
-    "APXUSD/USDC",
-    "SOFID/USDC"
+    "FIDD/USDC"
   ],
-  "updated_at": "2026-10-07T09:05:03.389992+00:00"
+  "updated_at": "2026-10-07T16:29:32.388578+00:00"
 }

@@ -1,0 +1,98 @@
+﻿{
+  "date": "2026-10-07",
+  "generated_at": "2026-10-07T16:26:25.818579+00:00",
+  "net_profit_usdc": -4.6513,
+  "net_profit_pct": -4.6513,
+  "total_fees_usdc": 0.0954,
+  "trades": [
+    {
+      "symbol": "S/USDC",
+      "entry_price": 0.0439,
+      "exit_price": 0.0399,
+      "quantity": 1138.9521640091116,
+      "amount_usdc": 50.0,
+      "gross_pnl": -4.555808656036447,
+      "buy_fee": 0.05,
+      "sell_fee": 0.045444191343963554,
+      "total_fees": 0.09544419134396356,
+      "net_pnl": -4.651252847380411,
+      "exit_reason": "stop_loss",
+      "entry_time": "2026-10-06T07:06:35.622904+00:00",
+      "exit_time": "2026-10-07T16:26:25.818579+00:00"
+    }
+  ],
+  "params_used": {
+    "TP_PCT": 0.15,
+    "SL_PCT": 0.08,
+    "TRAILING_ARM_PCT": 0.05,
+    "TRAILING_STEP_PCT": 0.03,
+    "FEE_RATE": 0.001,
+    "NEAR_BREAKOUT_MAX_DISTANCE_PCT": 20.0,
+    "VOLUME_RATIO_THRESHOLD": 1.5,
+    "MIN_EMA10_SLOPE_PCT": 0.2,
+    "RSI_MIN": 55.0,
+    "RSI_MAX": 85.0,
+    "ADX_MIN": 30.0
+  },
+  "last_7d": {
+    "dates": [
+      "2026-09-07",
+      "2026-09-08",
+      "2026-10-02",
+      "2026-10-03",
+      "2026-10-04",
+      "2026-10-05",
+      "2026-10-06"
+    ],
+    "pnl_list": [
+      0.8394,
+      6.8227,
+      1.3616,
+      3.3238,
+      0.683,
+      0.0,
+      0.0
+    ],
+    "total_profit": 13.0305,
+    "avg_daily": 1.8615,
+    "std_daily": 2.2793
+  },
+  "top5_ranking": [
+    {
+      "symbol": "APE/USDC",
+      "growth_score": 55.0,
+      "rsi_1h": "34.10",
+      "vol4h": 2.0698723804500663,
+      "dist_breakout_pct": 14.889336016096577
+    },
+    {
+      "symbol": "XTZ/USDC",
+      "growth_score": 55.0,
+      "rsi_1h": "35.85",
+      "vol4h": 2.0349330818326106,
+      "dist_breakout_pct": 11.266924564796918
+    },
+    {
+      "symbol": "MANA/USDC",
+      "growth_score": 50.79,
+      "rsi_1h": "66.40",
+      "vol4h": 0.5192612524277825,
+      "dist_breakout_pct": 0.18409425625920997
+    },
+    {
+      "symbol": "RLUSD/USDC",
+      "growth_score": 45.43,
+      "rsi_1h": "99.37",
+      "vol4h": 0.0,
+      "dist_breakout_pct": 0.0
+    },
+    {
+      "symbol": "FIDD/USDC",
+      "growth_score": 45.14,
+      "rsi_1h": "100.00",
+      "vol4h": 0.0,
+      "dist_breakout_pct": 0.0
+    }
+  ],
+  "open_positions_end": {}
+}
