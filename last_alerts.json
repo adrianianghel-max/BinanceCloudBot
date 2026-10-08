@@ -1,10 +1,10 @@
 ﻿{
   "top_symbols": [
     "USDQ/USDC",
+    "FIDD/USDC",
+    "APXUSD/USDC",
     "SOFID/USDC",
-    "USDG/USDC",
-    "LTC/USDC",
-    "RLUSD/USDC"
+    "USDG/USDC"
   ],
-  "updated_at": "2026-10-07T21:30:28.895744+00:00"
+  "updated_at": "2026-10-08T01:15:33.974236+00:00"
 }
