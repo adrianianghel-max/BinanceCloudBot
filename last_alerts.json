@@ -1,10 +1,10 @@
 ﻿{
   "top_symbols": [
     "USDQ/USDC",
-    "ALGO/USDC",
     "USDG/USDC",
     "EURC/USDC",
-    "EUROP/USDC"
+    "EUROP/USDC",
+    "ADA/USDC"
   ],
-  "updated_at": "2026-10-08T20:15:28.408427+00:00"
+  "updated_at": "2026-10-09T00:27:51.055111+00:00"
 }
