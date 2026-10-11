@@ -1,5 +1,22 @@
 ﻿{
-  "positions": {},
+  "positions": {
+    "S/USDC": {
+      "symbol": "S/USDC",
+      "entry_price": 0.0471,
+      "size_usdc": 50.0,
+      "quantity": 1061.5711252653928,
+      "entry_time": "2026-10-11T01:11:15.018364+00:00",
+      "peak_price": 0.0471,
+      "trailing_armed": false,
+      "trailing_stop": 0.0,
+      "tp_pct": 0.15,
+      "sl_pct": 0.08,
+      "status": "open",
+      "exit_price": null,
+      "exit_time": null,
+      "exit_reason": null
+    }
+  },
   "closed_trades": [
     {
       "symbol": "XRP/USDC",
